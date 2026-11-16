@@ -5,6 +5,8 @@ outside the game client. This is the desktop companion app: it watches your
 StarCraft II replay folders, uploads each new game to the ladder, and shows
 your queue and match state in a small window.
 
+![The StarLance App window showing the queue tab](docs/screenshot.png)
+
 This repository is the full source of the app. Every release is built by
 GitHub Actions from a tagged commit, not on anyone's machine, so the binary
 you download corresponds to the code here.
