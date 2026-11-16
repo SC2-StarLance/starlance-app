@@ -42,9 +42,9 @@ func run(files []string) error {
 		return fmt.Errorf("secret key is passphrase-protected; CI needs an unencrypted key")
 	}
 
-	pub, err := minisign.NewPublicKeyFromFile("minisign.pub")
+	pub, err := minisign.NewPublicKeyFromFile("app/minisign.pub")
 	if err != nil {
-		return fmt.Errorf("read minisign.pub: %w", err)
+		return fmt.Errorf("read app/minisign.pub: %w", err)
 	}
 
 	for _, name := range files {
@@ -54,7 +54,7 @@ func run(files []string) error {
 		}
 		ok, err := pub.VerifyFromFile(name, sig)
 		if err != nil || !ok {
-			return fmt.Errorf("%s: signature does not verify against minisign.pub (wrong key?)", name)
+			return fmt.Errorf("%s: signature does not verify against app/minisign.pub (wrong key?)", name)
 		}
 		out := name + ".minisig"
 		if err := os.WriteFile(out, sig.Encode(), 0o644); err != nil {

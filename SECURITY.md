@@ -20,7 +20,7 @@ want to be.
 ## Release signing
 
 Release zips are signed with minisign. The app embeds the public key in
-`minisign.pub` and refuses an update whose `.minisig` does not verify, so a
+`app/minisign.pub` and refuses an update whose `.minisig` does not verify, so a
 compromised GitHub account cannot push a malicious binary to existing
 installs. The secret key lives only in the protected `release` environment
 of this repository's GitHub Actions configuration.

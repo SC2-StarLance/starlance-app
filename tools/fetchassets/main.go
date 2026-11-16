@@ -58,7 +58,7 @@ func run(root string, checkOnly bool) error {
 		if err := safeRelativePath(f.path); err != nil {
 			return fmt.Errorf("%s: %w", f.path, err)
 		}
-		target := filepath.Join(root, "frontend", "dist", filepath.FromSlash(f.path))
+		target := filepath.Join(root, "app", "frontend", "dist", filepath.FromSlash(f.path))
 		if current, err := fileHash(target); err == nil && current == f.sum {
 			continue
 		}
@@ -117,7 +117,7 @@ func safeRelativePath(p string) error {
 	}
 	clean := path.Clean(p)
 	if clean != p || clean == "." || strings.HasPrefix(clean, "..") {
-		return errors.New("path must be clean and stay inside frontend/dist")
+		return errors.New("path must be clean and stay inside app/frontend/dist")
 	}
 	return nil
 }

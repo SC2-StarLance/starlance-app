@@ -21,13 +21,13 @@ assets:
 	go run ./tools/fetchassets
 
 build-linux: assets
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags production,webkit2_41 -ldflags "$(LDFLAGS)" -o $(BINDIR)/$(BINARY) .
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags production,webkit2_41 -ldflags "$(LDFLAGS)" -o $(BINDIR)/$(BINARY) ./app
 
 build-windows: assets
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -tags production -ldflags "$(WIN_LDFLAGS)" -o $(BINDIR)/$(BINARY_EXE) .
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -tags production -ldflags "$(WIN_LDFLAGS)" -o $(BINDIR)/$(BINARY_EXE) ./app
 
 build-macos: assets
-	CGO_ENABLED=1 GOOS=darwin GOARCH=$(MACOS_ARCH) go build -tags production -ldflags "$(LDFLAGS)" -o $(BINDIR)/$(BINARY)-darwin-$(MACOS_ARCH) .
+	CGO_ENABLED=1 GOOS=darwin GOARCH=$(MACOS_ARCH) go build -tags production -ldflags "$(LDFLAGS)" -o $(BINDIR)/$(BINARY)-darwin-$(MACOS_ARCH) ./app
 
 # Double-clickable bundle for macOS: the .app is what Finder opens and what
 # carries the Dock/tray icon (Info.plist + AppIcon.icns). Run on a mac, since
@@ -36,15 +36,16 @@ app-macos: build-macos
 	rm -rf "$(APP_DIR)"
 	mkdir -p "$(APP_DIR)/Contents/MacOS" "$(APP_DIR)/Contents/Resources"
 	cp "$(BINDIR)/$(BINARY)-darwin-$(MACOS_ARCH)" "$(APP_DIR)/Contents/MacOS/$(BINARY)"
-	sh packaging/macos/make-icns.sh assets/sl-logo.png "$(APP_DIR)/Contents/Resources/AppIcon.icns"
+	sh packaging/macos/make-icns.sh app/assets/sl-logo.png "$(APP_DIR)/Contents/Resources/AppIcon.icns"
 	sed -e 's/__VERSION__/$(VERSION)/g' packaging/macos/Info.plist > "$(APP_DIR)/Contents/Info.plist"
 	@echo "built $(APP_DIR)"
 
-# Windows executable icon: the committed .syso is what release builds link, so
+# Windows executable icon: the committed .syso is what release builds link (it
+# lives in app/ next to the sources), so
 # ImageMagick and mingw are needed only to regenerate it after a logo change.
 icon:
-	magick assets/sl-logo.png -trim +repage -define icon:auto-resize=256,128,64,48,32,24,16 assets/win/icon.ico
-	x86_64-w64-mingw32-windres -O coff -I assets/win -o rsrc_windows_amd64.syso assets/win/rsrc.rc
+	magick app/assets/sl-logo.png -trim +repage -define icon:auto-resize=256,128,64,48,32,24,16 app/assets/win/icon.ico
+	x86_64-w64-mingw32-windres -O coff -I app/assets/win -o app/rsrc_windows_amd64.syso app/assets/win/rsrc.rc
 
 # Signs release files for the updater: MINISIGN_SECRET_KEY=... make sign FILES="dist/*"
 sign:

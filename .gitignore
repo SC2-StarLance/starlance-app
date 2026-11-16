@@ -1,7 +1,7 @@
 # Build output
 bin/
 
-# Root-level binary artifacts (make build, and go build ./... default output name)
+# Root-level binary artifacts (make build, or a stray go build of the app package)
 /sc2-replay-uploader
 /sc2-replay-uploader.exe
 /starlance-replay-uploader
@@ -15,6 +15,6 @@ bin/
 # StarCraft II artwork, pulled from the starlance-assets pin by `make assets`
 /keys/
 .keys/
-/frontend/dist/leagues/
-/frontend/dist/races/
-/frontend/dist/bg.jpg
+/app/frontend/dist/leagues/
+/app/frontend/dist/races/
+/app/frontend/dist/bg.jpg

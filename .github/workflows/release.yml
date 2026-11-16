@@ -124,7 +124,7 @@ jobs:
           mkdir -p dist
           go build -tags "${{ matrix.tags }}" -trimpath \
             -ldflags "-s -w ${{ matrix.ldflags }} -X main.Version=${VERSION}" \
-            -o "dist/${{ matrix.binary }}" .
+            -o "dist/${{ matrix.binary }}" ./app
 
       - name: Package binary
         run: |
@@ -154,8 +154,8 @@ jobs:
           CGO_ENABLED=1 GOOS=darwin GOARCH=${{ matrix.goarch }} \
             go build -tags production -trimpath \
             -ldflags "-s -w -X main.Version=${VERSION}" \
-            -o "$APP/Contents/MacOS/sc2-replay-uploader" .
-          sh packaging/macos/make-icns.sh assets/sl-logo.png "$APP/Contents/Resources/AppIcon.icns"
+            -o "$APP/Contents/MacOS/sc2-replay-uploader" ./app
+          sh packaging/macos/make-icns.sh app/assets/sl-logo.png "$APP/Contents/Resources/AppIcon.icns"
           sed -e "s/__VERSION__/${VERSION}/g" packaging/macos/Info.plist > "$APP/Contents/Info.plist"
           cd dist
           # No "darwin" in this name on purpose: the updater must not match it.

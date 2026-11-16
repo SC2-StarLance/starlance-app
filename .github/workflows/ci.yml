@@ -58,4 +58,4 @@ jobs:
           mkdir -p dist
           go build -tags "${{ matrix.tags }}" -trimpath \
             -ldflags "-s -w ${{ matrix.ldflags }} -X main.Version=ci" \
-            -o "dist/${{ matrix.binary }}" .
+            -o "dist/${{ matrix.binary }}" ./app

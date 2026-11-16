@@ -109,7 +109,7 @@ in [PRIVACY.md](PRIVACY.md).
 
 Requires Go 1.26.11 or newer. Blizzard artwork is not part of this repository;
 it is fetched from the pinned commit in `assets.lock` (see
-[NOTICE](NOTICE)) into `frontend/dist/`. The build fails until that fetch has
+[NOTICE](NOTICE)) into `app/frontend/dist/`. The build fails until that fetch has
 run, so the assets step is first:
 
 ```console
