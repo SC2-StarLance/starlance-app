@@ -1,0 +1,206 @@
+name: release
+
+# Publishes a GitHub Release whenever a vX.Y.Z tag is pushed. The release
+# assets are what players download (browser, no terminal) and what the app
+# itself consumes for its fully automatic self-update:
+#
+#   sc2-replay-uploader-<os>-<arch>.zip          the binary (must contain exactly one file)
+#   sc2-replay-uploader-<os>-<arch>.zip.sha256   sha256sum checksum for manual checks
+#   sc2-replay-uploader-<os>-<arch>.zip.minisig  minisign signature, checked by the updater
+#   sc2-replay-uploader-windows-<arch>.exe       the same Windows binary, unpacked for the
+#                                                website's one-click download (the updater
+#                                                filters it out)
+#
+# Asset names and the single-binary zip shape are the contract detected by
+# github.com/creativeprojects/go-selfupdate (update.go): assets suffixed
+# -<os>-<arch>.zip, archive containing exactly the binary named
+# sc2-replay-uploader(.exe). The updater fetches <zip>.minisig and verifies it
+# against the public key embedded in minisign.pub; the secret key lives only in
+# the protected "release" environment. Change workflow, signing and update.go
+# together.
+#
+# macOS additionally ships a double-clickable .app zip for the first install
+# (Finder + Dock icon). Its name deliberately avoids the "darwin" token the
+# library matches on, so the updater only ever sees the plain-binary zip and
+# replaces Contents/MacOS/sc2-replay-uploader inside the bundle.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: vet and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install Linux window dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Fetch pinned artwork
+        run: go run ./tools/fetchassets
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Vulnerability scan
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  build:
+    needs: gate
+    name: build ${{ matrix.goos }}/${{ matrix.goarch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            binary: sc2-replay-uploader
+            tags: production,webkit2_41
+            cgo: "1"
+            ldflags: ""
+          - runner: ubuntu-latest
+            goos: windows
+            goarch: amd64
+            binary: sc2-replay-uploader.exe
+            tags: production
+            cgo: "0"
+            ldflags: "-H windowsgui"
+          - runner: macos-15-intel # Intel
+            goos: darwin
+            goarch: amd64
+            binary: sc2-replay-uploader
+            tags: production
+            cgo: "1"
+            ldflags: ""
+          - runner: macos-15 # Apple silicon
+            goos: darwin
+            goarch: arm64
+            binary: sc2-replay-uploader
+            tags: production
+            cgo: "1"
+            ldflags: ""
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install Linux window dependencies
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Fetch pinned artwork
+        run: go run ./tools/fetchassets
+
+      - name: Build
+        env:
+          CGO_ENABLED: ${{ matrix.cgo }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          go build -tags "${{ matrix.tags }}" -trimpath \
+            -ldflags "-s -w ${{ matrix.ldflags }} -X main.Version=${VERSION}" \
+            -o "dist/${{ matrix.binary }}" .
+
+      - name: Package binary
+        run: |
+          cd dist
+          zip -q "sc2-replay-uploader-${{ matrix.goos }}-${{ matrix.goarch }}.zip" "${{ matrix.binary }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            # One-click website download: the exe the zip carries, unpacked.
+            mv "${{ matrix.binary }}" "sc2-replay-uploader-windows-${{ matrix.goarch }}.exe"
+          else
+            rm "${{ matrix.binary }}"
+          fi
+          for f in *.zip *.exe; do
+            [ -e "$f" ] || continue
+            sha256sum "$f" | awk '{print $1}' > "$f.sha256"
+          done
+          ls -l
+
+      # macOS first install: Finder needs a bundle (Dock icon, Gatekeeper
+      # dialog, right-click Open). Built here so the .app always matches the
+      # binary the updater will later replace inside it.
+      - name: Package macOS app bundle
+        if: matrix.goos == 'darwin'
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          APP="dist/StarLance App.app"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          CGO_ENABLED=1 GOOS=darwin GOARCH=${{ matrix.goarch }} \
+            go build -tags production -trimpath \
+            -ldflags "-s -w -X main.Version=${VERSION}" \
+            -o "$APP/Contents/MacOS/sc2-replay-uploader" .
+          sh packaging/macos/make-icns.sh assets/sl-logo.png "$APP/Contents/Resources/AppIcon.icns"
+          sed -e "s/__VERSION__/${VERSION}/g" packaging/macos/Info.plist > "$APP/Contents/Info.plist"
+          cd dist
+          # No "darwin" in this name on purpose: the updater must not match it.
+          zip -qry "starlance-uploader-macos-app-${{ matrix.goarch }}.zip" "StarLance App.app"
+          sha256sum "starlance-uploader-macos-app-${{ matrix.goarch }}.zip" \
+            | awk '{print $1}' > "starlance-uploader-macos-app-${{ matrix.goarch }}.zip.sha256"
+          rm -rf "StarLance App.app"
+          ls -l
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Sign release assets
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+        run: go run ./tools/signrelease dist/*.zip dist/*.exe
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -l dist
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/*.zip dist/*.exe dist/*.sha256 dist/*.minisig \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "StarLance App ${GITHUB_REF_NAME}" \
+            --generate-notes

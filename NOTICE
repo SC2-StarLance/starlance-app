@@ -1,0 +1,36 @@
+# Notices
+
+## Code
+
+The StarLance App source is Copyright (C) 2026 StarLance contributors and is
+licensed under the MIT License (see `LICENSE`).
+
+The StarLance name and logo are not covered by that license. Use the code
+freely, but do not present a fork or a reskinned build as the StarLance App.
+
+## StarCraft II artwork
+
+Rank league emblems, race icons, and the background image are artwork from
+StarCraft II: Legacy of the Void, Copyright (C) Blizzard Entertainment, Inc.
+They are not covered by this repository's license.
+
+That artwork is not stored here. It is fetched at build time from
+`SC2-StarLance/starlance-assets` at the commit pinned in `assets.lock`, and
+the build verifies every file's SHA-256. The assets repository grants no
+rights to the artwork either; it exists so the files have one stable, pinned
+location. Blizzard has not endorsed this project. If Blizzard or an
+authorized party asks for the artwork to be removed, it will be removed.
+
+## Everything else
+
+The tray icon, app icon, and notification sounds were made for StarLance and
+are dedicated to the public domain under CC0 1.0.
+
+StarCraft, StarCraft II, Battle.net, and Blizzard Entertainment are
+trademarks or registered trademarks of Blizzard Entertainment, Inc. in the
+U.S. and/or other countries. This project is unofficial and is not affiliated
+with or endorsed by Blizzard Entertainment.
+
+## Contact
+
+Artwork or trademark concerns: sc2-starlance@proton.me

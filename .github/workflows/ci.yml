@@ -1,0 +1,61 @@
+name: ci
+
+# Build-only checks on pushes and pull requests. Tests and vulnerability
+# scanning run once per release tag (release.yml), not on every push.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build ${{ matrix.goos }}/${{ matrix.goarch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            binary: sc2-replay-uploader
+            tags: production,webkit2_41
+            cgo: "1"
+            ldflags: ""
+          - runner: ubuntu-latest
+            goos: windows
+            goarch: amd64
+            binary: sc2-replay-uploader.exe
+            tags: production
+            cgo: "0"
+            ldflags: "-H windowsgui"
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install Linux window dependencies
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Fetch pinned artwork
+        run: go run ./tools/fetchassets
+
+      - name: Build
+        env:
+          CGO_ENABLED: ${{ matrix.cgo }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p dist
+          go build -tags "${{ matrix.tags }}" -trimpath \
+            -ldflags "-s -w ${{ matrix.ldflags }} -X main.Version=ci" \
+            -o "dist/${{ matrix.binary }}" .

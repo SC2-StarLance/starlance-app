@@ -1,0 +1,20 @@
+# Build output
+bin/
+
+# Root-level binary artifacts (make build, and go build ./... default output name)
+/sc2-replay-uploader
+/sc2-replay-uploader.exe
+/starlance-replay-uploader
+/starlance-replay-uploader.exe
+
+*.log
+
+# Editor/OS noise
+*.swp
+.DS_Store
+# StarCraft II artwork, pulled from the starlance-assets pin by `make assets`
+/keys/
+.keys/
+/frontend/dist/leagues/
+/frontend/dist/races/
+/frontend/dist/bg.jpg

@@ -1,0 +1,19 @@
+[Unit]
+Description=StarLance SC2 replay uploader
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Replace /path/to with the real absolute path to the binary.
+ExecStart=/path/to/sc2-replay-uploader
+Restart=on-failure
+RestartSec=5
+# All state (settings.json, records.json, auth.json, uploader.log) lives in
+# the per-user app dir — ~/.config/starlance-uploader (or $XDG_CONFIG_HOME) on
+# Linux — not next to the binary and not in WorkingDirectory. The --config
+# flag can point the program at a settings file elsewhere; the token, records,
+# and log stay in the app dir regardless.
+
+[Install]
+WantedBy=default.target

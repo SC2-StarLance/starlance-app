@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StarLance App</title>
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+<div class="updating hidden" id="updating" role="status" aria-live="polite">
+  <div class="updating-in">
+    <div class="updating-mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M16 3l11 6.2v12.6L16 28 5 21.8V9.2L16 3z" stroke="currentColor" stroke-width="1.4"/><path d="M16 9.4l5.8 3.3v6.6L16 22.6l-5.8-3.3v-6.6L16 9.4z" fill="currentColor" opacity=".25"/><path d="M16 13.2l2.9 1.6v3.2L16 19.6l-2.9-1.6v-3.2l2.9-1.6z" fill="currentColor"/></svg>
+    </div>
+    <div class="updating-title">Updating StarLance</div>
+    <div class="updating-version" id="updatingVersion"></div>
+    <div class="updating-bar"><span></span></div>
+    <div class="updating-phase" id="updatingPhase">Downloading the new version</div>
+  </div>
+</div>
+  <div class="app">
+    <header class="masthead">
+      <img class="logo" src="/logo.png" alt="StarLance App" />
+    </header>
+
+    <div class="topbar">
+      <nav class="tabs">
+        <button class="tab on" data-tab="ladder">Play</button>
+        <button class="tab" data-tab="mapbans">Map bans</button>
+        <button class="tab" data-tab="settings">Settings</button>
+      </nav>
+    </div>
+
+    <main class="stage">
+      <section id="tab-ladder" class="pane">
+        <section id="loginPanel" class="card hidden">
+          <h2>Log in to queue</h2>
+          <p class="sub">Log in with Battle.net to find players looking for a StarLance game.</p>
+          <button id="loginBtn" class="btn primary wide">Log in with Battle.net</button>
+        </section>
+
+        <section id="queuePanel" class="card hidden">
+          <p class="label">Race</p>
+          <div class="races" id="races">
+            <button class="race terran" data-race="terran">
+              <img class="race-bg hidden" alt="" />
+              <span class="race-top"><img class="raceIcon" src="races/terran.png" alt="" /><span class="raceName">Terran</span></span>
+              <span class="race-meta"><span class="race-rating">Unranked</span></span>
+            </button>
+            <button class="race protoss" data-race="protoss">
+              <img class="race-bg hidden" alt="" />
+              <span class="race-top"><img class="raceIcon" src="races/protoss.png" alt="" /><span class="raceName">Protoss</span></span>
+              <span class="race-meta"><span class="race-rating">Unranked</span></span>
+            </button>
+            <button class="race zerg" data-race="zerg">
+              <img class="race-bg hidden" alt="" />
+              <span class="race-top"><img class="raceIcon" src="races/zerg.png" alt="" /><span class="raceName">Zerg</span></span>
+              <span class="race-meta"><span class="race-rating">Unranked</span></span>
+            </button>
+            <button class="race random" data-race="random">
+              <img class="race-bg hidden" alt="" />
+              <span class="race-top"><img class="raceIcon" src="races/random-small.png" alt="" /><span class="raceName">Random</span></span>
+              <span class="race-meta"><span class="race-rating">Unranked</span></span>
+            </button>
+          </div>
+
+          <div id="regionsWrap">
+            <div class="label-row">
+              <p class="label">Region</p>
+              <div class="label-side">
+                <span class="void-note hidden" id="voidNote" role="status"></span>
+                <span class="lock-chip hidden" id="lockChip">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.5 20h19z"/><path d="M12 9.5v5"/><path d="M12 17.5h.01"/></svg>
+                  <span id="lockLabel">Leave penalty</span> · <b id="lockLeft">0:00</b>
+                </span>
+              </div>
+            </div>
+            <div class="regions" id="regions"></div>
+            <p class="hint hidden" id="regionHint">
+              <span id="regionHintText"></span>
+              <button class="btn ghost" id="regionHintCheck" type="button">Check again</button>
+              <button class="btn ghost" id="regionHintOpen" type="button">Open settings</button>
+            </p>
+          </div>
+
+          <div class="queuebar" id="queuebar" data-state="idle">
+            <div class="qbar-status">
+              <span class="rank-mark hidden" id="rankMark">
+                <img class="rank-layer rank-base" id="rankBadge" alt="" />
+                <img class="rank-layer rank-mid hidden" id="rankBadge2" alt="" />
+                <img class="rank-layer rank-top hidden" id="rankBadge1" alt="" />
+                <img class="rank-layer rank-full hidden" id="rankBadge0" alt="" />
+                <img class="rank-layer rank-blur hidden" id="rankStarBlur" alt="" />
+                <img class="rank-layer rank-star hidden" id="rankStar" alt="" />
+              </span>
+              <span class="qdot hidden" id="qdot"></span>
+              <span class="timer hidden" id="timer">00:00</span>
+              <span class="qtext muted" id="qtext"></span>
+              <span class="barspark hidden" id="barSpark" aria-hidden="true"></span>
+              <span class="barcount hidden" id="barToday"></span>
+            </div>
+            <button id="findBtn" class="btn primary qbtn">Find match</button>
+            <button id="hideBtn" class="btn ghost qbtn qbtn-sub hidden">Minimize to tray</button>
+            <button id="showBtn" class="btn primary qbtn hidden">Show match</button>
+            <button id="leaveBtn" class="btn danger qbtn hidden">Leave match</button>
+            <button id="stopBtn" class="btn danger qbtn hidden">Stop queue</button>
+          </div>
+
+        </section>
+
+
+        
+
+        <p class="hint chanhint hidden" id="chanHint">
+          <span>In StarCraft II chat, type <code>/join StarLance</code><button class="copy-icon" id="chanCopy" type="button" aria-label="Copy /join StarLance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg></button> to find your opponent.</span>
+        </p>
+
+        <p class="error hidden" id="error"></p>
+      </section>
+
+      <section id="tab-mapbans" class="hidden pane">
+        <section id="mbLogin" class="card hidden">
+          <h2>Log in to choose bans</h2>
+          <p class="sub">Log in with Battle.net to choose which maps you ban.</p>
+          <button id="mbLoginBtn" class="btn primary wide">Go to log in</button>
+        </section>
+
+        <section id="mbPanel" class="card hidden">
+          <div class="mb-head">
+            <p class="mb-count" id="mbCount">0/2 banned</p>
+          </div>
+          <div class="mb-maps" id="mbMaps"></div>
+
+          <p class="note hidden" id="mbNote"></p>
+        </section>
+      </section>
+
+      <section id="tab-settings" class="hidden pane">
+        <div class="grid">
+          <section class="card">
+            <p class="eyebrow">Account</p>
+            <div class="row">
+              <span class="acct">
+                <img class="acct-badge hidden" id="setBadge" alt="" />
+                <span class="acct-id">
+                  <span class="value" id="setName">Not logged in</span>
+                  <span class="acct-sub" id="setRecord"></span>
+                </span>
+              </span>
+              <button id="authBtn" class="btn ghost">Log in</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <p class="eyebrow">Startup</p>
+            <label class="toggle">
+              <input type="checkbox" id="startSystem" />
+              <span class="switch" aria-hidden="true"></span>
+              <span class="toggle-label">Start with system</span>
+            </label>
+          </section>
+
+          <section class="card span2">
+            <p class="eyebrow">Replays</p>
+            <ul class="folders" id="folders"></ul>
+            <div class="row wrap">
+              <button id="addFolder" class="btn ghost">Add folder</button>
+              <button id="openReplays" class="btn ghost">Open replays folder</button>
+            </div>
+          </section>
+
+          <section class="card span2">
+            <p class="eyebrow">In-game channel</p>
+            <div class="row wrap">
+              <code class="chan-cmd">/join StarLance</code>
+              <button class="copy-icon" id="chanCopySet" type="button" aria-label="Copy /join StarLance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg></button>
+            </div>
+            <p class="hint">Join the in-game channel on each region you queue in. Ladder invites are sent there.</p>
+          </section>
+
+          <section class="card">
+            <p class="eyebrow">About</p>
+            <div class="row">
+              <span class="value" id="setVersion"></span>
+              <button id="checkUpdate" class="btn ghost">Check for updates</button>
+            </div>
+          </section>
+
+          <section class="card span2">
+            <p class="eyebrow">Install</p>
+            <p class="value" id="setInstall"></p>
+            <p class="hint" id="setUninstall"></p>
+          </section>
+
+          <section class="card">
+            <p class="eyebrow">Quit</p>
+            <div class="row">
+              <span class="value">The StarLance App minimizes to the tray when you close the window. Click Quit to exit it.</span>
+              <button id="quitBtn" class="btn danger">Quit StarLance App</button>
+            </div>
+          </section>
+        </div>
+
+        <p class="note hidden" id="setNote"></p>
+        <p class="error hidden" id="setError"></p>
+      </section>
+    </main>
+
+    <footer class="stage-foot">
+      <span class="foot-left">
+        <span class="who">
+          <span class="dot" id="dot"></span>
+          <span id="player">Not logged in</span>
+        </span>
+        <span id="today"></span>
+      </span>
+      <span class="foot-right">
+        <span class="foot-links">
+          <a id="discord" class="link" href="#">Discord</a>
+          <a id="railSite" class="link" href="#">starlance.club</a>
+        </span>
+        <span class="ver" id="version"></span>
+      </span>
+    </footer>
+  </div>
+
+  <div class="mm hidden" id="mmModal" role="dialog" aria-modal="true" aria-labelledby="mmEyebrow">
+  <div class="mm-card" id="mmCard">
+    <div class="mm-bg" id="mmBg" aria-hidden="true"></div>
+    <div class="mm-scrim" aria-hidden="true"></div>
+    <p class="mm-eyebrow" id="mmEyebrow">Match found</p>
+    <h2 class="mm-title" id="mmTitle">Accept match</h2>
+    <div class="mm-timer" id="mmTimer">
+      <svg class="mm-ring" viewBox="0 0 160 160" aria-hidden="true">
+        <circle class="mm-ring-track" cx="80" cy="80" r="70"></circle>
+        <circle class="mm-ring-fill" id="mmRing" cx="80" cy="80" r="70"></circle>
+      </svg>
+      <div class="mm-count" id="mmCount" role="timer" aria-live="off">60</div>
+    </div>
+    <div class="mm-actions" id="mmActions">
+      <button class="btn primary" id="mmAccept">Accept</button>
+      <button class="btn ghost" id="mmDecline">Decline</button>
+    </div>
+    <div class="mm-ready hidden" id="mmReady">
+      <div class="mm-map"><img id="mmMapImg" alt="" class="hidden" /></div>
+      <div class="mm-facts">
+        <div class="mm-fact"><span class="k">Opponent</span><span class="v strong" id="mmOpp"></span><span class="mm-flavor" id="mmFlavor"></span></div>
+        <div class="mm-fact"><span class="k">Region</span><span class="v strong" id="mmRegion"></span></div>
+        <div class="mm-fact"><span class="k">Map</span><span class="mm-fact-row"><span class="v strong" id="mmMap"></span><button class="copy-icon hidden" id="mmMapCopy" type="button" aria-label="Copy map name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg></button></span></div>
+      </div>
+      <p class="mm-verdict" id="mmVerdict"></p>
+      <p class="mm-lead" id="mmLead"></p>
+      <div class="mm-chan hidden" id="mmChan">
+        <span>First game on <span id="mmChanRegion"></span>. In StarCraft II chat, type <code>/join StarLance</code><button class="copy-icon" id="mmChanCopy" type="button" aria-label="Copy /join StarLance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg></button>.</span>
+      </div>
+      <ol class="mm-steps" id="mmSteps"></ol>
+      <button class="btn primary" id="mmDone">Close</button>
+    </div>
+  </div>
+</div>
+  <script src="/app.js"></script>
+
+  
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "backend_url": "https://starlance.club/api/replays/upload",
+  "heartbeat_seconds": 30,
+  "replay_path": "",
+  "start_with_system": false
+}
