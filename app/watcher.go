@@ -143,7 +143,14 @@ func (w *Watcher) Run() error {
 		added++
 	}
 	if added == 0 {
-		return fmt.Errorf("watcher: no replay directory could be watched (%s)", strings.Join(dirs, ", "))
+		if len(dirs) == 0 {
+			// First launch before a folder is picked: stay alive and idle
+			// rather than failing, so the window can add one live and an
+			// update can still restart the app.
+			w.logger.Printf("watcher: no replay folder yet; waiting for one")
+		} else {
+			return fmt.Errorf("watcher: no replay directory could be watched (%s)", strings.Join(dirs, ", "))
+		}
 	}
 	w.logger.Printf("watcher: watching %s", strings.Join(dirs, ", "))
 

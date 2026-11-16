@@ -1223,10 +1223,13 @@ h2 {
   text-align: center;
 }
 .updating-mark {
-  color: var(--ice);
   margin-bottom: 10px;
 }
-.updating-mark svg { width: 30px; height: 30px; }
+.updating-mark img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
 .updating-title {
   font-size: 15px;
   font-weight: 600;

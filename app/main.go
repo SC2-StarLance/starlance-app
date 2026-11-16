@@ -65,6 +65,7 @@ func main() {
 		waitForParent(*fTakeover, logger)
 	}
 	if exe, err := currentExecutable(); err == nil {
+		launchedExe = exe
 		removeOldBinary(exe, logger)
 	}
 
@@ -226,26 +227,32 @@ func main() {
 	relaunchCh := make(chan bool, 1)
 	go func() {
 		relaunchAfterExit := false
-		select {
-		case <-ctx.Done():
-			logger.Println("main: shutdown requested")
-		case <-restartCh:
-			// Update installed: shut down (same path as Quit) and hand over.
-			logger.Println("main: update installed - shutting down for restart")
-			relaunchAfterExit = true
-			stop()
-		case err := <-watcherDone:
-			if err != nil {
-				// The watcher could not start (e.g. a stale replay_path pointing
-				// at a folder that no longer exists). Without this notification
-				// the tray icon would just vanish with no explanation.
-				logger.Printf("main: watcher stopped: %v", err)
-				Notify(logger, NoticeProblem, "Replays folder unavailable",
-					"Pick another folder from the tray menu.")
+		for {
+			select {
+			case <-ctx.Done():
+				logger.Println("main: shutdown requested")
+				quitWindow()
+				relaunchCh <- relaunchAfterExit
+				return
+			case <-restartCh:
+				// Update installed: shut down (same path as Quit) and hand over.
+				logger.Println("main: update installed - shutting down for restart")
+				relaunchAfterExit = true
+				stop()
+				quitWindow()
+				relaunchCh <- relaunchAfterExit
+				return
+			case err := <-watcherDone:
+				if err != nil {
+					// A stale replay_path (a folder that no longer exists) must
+					// not end the app: the window still offers the picker, and
+					// a pending update still needs this loop to restart it.
+					logger.Printf("main: watcher stopped: %v", err)
+					Notify(logger, NoticeProblem, "Replays folder unavailable",
+						"Pick another folder from the tray menu.")
+				}
 			}
 		}
-		quitWindow()
-		relaunchCh <- relaunchAfterExit
 	}()
 
 	if err := runWindow(cfg, auth, logger, deps, stop, restartCh); err != nil {

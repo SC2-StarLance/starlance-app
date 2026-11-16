@@ -315,14 +315,25 @@ func removeOldBinary(exe string, logger *log.Logger) {
 	logger.Printf("update: removed stale %s", old)
 }
 
+// launchedExe is the path this process started from, captured before any
+// self-update touches the file. os.Executable follows the running binary, and
+// the updater renames it to ".<exe>.old" mid-swap, so resolving it after the
+// swap yields a path that no longer exists (Linux/macOS) and the relaunch
+// fails to find itself. Windows has the same problem through the .old file.
+var launchedExe string
+
 // relaunchSelf starts the freshly installed binary as a detached process
 // with -takeover-from=<current pid> plus the user's original command-line
 // arguments, so the new instance waits for this process to exit before
 // taking over. The caller must be on its way out (main's cleanup is done).
 func relaunchSelf(logger *log.Logger, userArgs []string) error {
-	exe, err := currentExecutable()
-	if err != nil {
-		return err
+	exe := launchedExe
+	if exe == "" {
+		var err error
+		exe, err = currentExecutable()
+		if err != nil {
+			return err
+		}
 	}
 	args := takeoverArgs(userArgs)
 	if err := startDetached(exe, args); err != nil {

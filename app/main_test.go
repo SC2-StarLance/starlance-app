@@ -1083,3 +1083,63 @@ func TestPendingPollQuietWhenNoPendingMatch(t *testing.T) {
 	default:
 	}
 }
+
+// TestWatcherStartsWithNoFolderAndPicksOneUpLive pins the first-launch state:
+// an empty folder set must not stop the watcher. The window's picker adds the
+// first folder live, and a pending update needs the app still running to
+// restart it.
+func TestWatcherStartsWithNoFolderAndPicksOneUpLive(t *testing.T) {
+	oldPoll := settlePoll
+	settlePoll = 10 * time.Millisecond
+	t.Cleanup(func() { settlePoll = oldPoll })
+
+	dir := t.TempDir()
+	fileCh := make(chan string, 1)
+	w := NewWatcher(nil, testLogger(), fileCh)
+	done := make(chan error, 1)
+	go func() { done <- w.Run() }()
+	defer func() {
+		w.Stop()
+		<-done
+	}()
+
+	select {
+	case err := <-done:
+		t.Fatalf("watcher stopped on an empty folder set: %v", err)
+	case <-time.After(200 * time.Millisecond):
+	}
+
+	if err := w.SetDirs([]string{dir}); err != nil {
+		t.Fatalf("SetDirs after an empty start: %v", err)
+	}
+	path := filepath.Join(dir, "first.SC2Replay")
+	if err := os.WriteFile(path, []byte("replay"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case got := <-fileCh:
+		if got != path {
+			t.Errorf("released %q, want %q", got, path)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("watcher did not pick up the first folder added live")
+	}
+}
+
+// TestRelaunchSelfUsesStartupPath pins the restart half of a self-update:
+// os.Executable follows the renamed binary, so after the swap it resolves to
+// ".<exe>.old" and the relaunch cannot find itself. The relaunch must use the
+// path captured at startup instead.
+func TestRelaunchSelfUsesStartupPath(t *testing.T) {
+	old := launchedExe
+	t.Cleanup(func() { launchedExe = old })
+	launchedExe = filepath.Join(t.TempDir(), "definitely-not-here")
+
+	err := relaunchSelf(testLogger(), nil)
+	if err == nil {
+		t.Fatal("relaunchSelf succeeded with a missing executable")
+	}
+	if !strings.Contains(err.Error(), launchedExe) {
+		t.Errorf("relaunch error %q does not name the startup path %q", err, launchedExe)
+	}
+}
