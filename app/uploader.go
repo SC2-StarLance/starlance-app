@@ -567,27 +567,27 @@ func parseRejectionReason(body []byte) string {
 func rejectionMessage(reason string) string {
 	switch reason {
 	case "mod_hash_rejected":
-		return "your StarLance mod is outdated, so the game will not count. Install the current mod from starlance.club/mod-versions, then restart StarCraft II."
+		return "Your StarLance mod is outdated. Install the current version from starlance.club/mod-versions, then restart StarCraft II."
 	case "map_mismatch":
-		return "this replay is not from your assigned ladder map, so the game will not count. Play the match in the lobby StarLance created."
+		return "This replay is not from your assigned ladder map. Play the match in the lobby StarLance created."
 	case "toons_not_both_present":
-		return "the replay does not contain both queued players, so the game will not count. Play the match in the exact lobby StarLance created."
+		return "The replay does not contain both queued players. Play the match in the exact lobby StarLance created."
 	case "no_pending_match":
-		return "no StarLance match was waiting for this replay, so it was not uploaded. Only games played through the StarLance queue count."
+		return "No StarLance match was waiting for this replay. Only games played through the StarLance queue count."
 	case "no_single_winner":
-		return "the replay has no clear winner, so the game cannot be scored. If this was a StarLance match, report it on the StarLance Discord."
+		return "The replay has no clear winner, so it cannot be scored. If this was a StarLance match, report it on the StarLance Discord."
 	case "not_a_replay", "invalid_replay":
-		return "StarCraft II did not write a readable replay for this game, so it will not count. Finish the game normally and let it save to the replay folder."
+		return "StarCraft II did not write a readable replay for this game. Finish the game normally and let it save to the replay folder."
 	case "replay_build":
-		return "this replay is from a StarCraft II version StarLance does not support yet, so the game will not count. Update StarCraft II before your next match."
+		return "This replay is from a StarCraft II version StarLance does not support yet. Update StarCraft II before your next match."
 	case "replay_too_large":
-		return "this replay is too large for StarLance to read, so the game will not count. Upload it from the match page on starlance.club if you think it should have counted."
+		return "This replay is too large for StarLance to read. Upload it from the match page on starlance.club if you think it should have counted."
 	case "map_unverifiable":
-		return "StarLance could not read the map from this replay, so the game will not count. Play the match in the lobby StarLance created."
+		return "StarLance could not read the map from this replay. Play the match in the lobby StarLance created."
 	case "":
-		return "the backend rejected this replay, so it will not count."
+		return "StarLance did not accept this replay."
 	default:
-		return "the backend rejected this replay, so it will not count. If this keeps happening, send the StarLance App log in the StarLance Discord."
+		return "StarLance did not accept this replay. If this keeps happening, send the StarLance App log in the StarLance Discord."
 	}
 }
 

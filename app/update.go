@@ -133,7 +133,7 @@ func runAutoUpdate(ctx context.Context, stop context.CancelFunc, logger *log.Log
 			reportUpdatePhase("restarting", v)
 			time.Sleep(restartDelay)
 			notify(logger, NoticeInfo, "StarLance App",
-				"Updated itself to "+v+" and is restarting.")
+				"Version "+v+" is installed. Restarting now.")
 			restartCh <- struct{}{}
 			stop()
 			return
@@ -150,7 +150,7 @@ func runAutoUpdate(ctx context.Context, stop context.CancelFunc, logger *log.Log
 func checkUpdateNow(ctx context.Context, stop context.CancelFunc, logger *log.Logger, notify Notifier, restartCh chan<- struct{}) {
 	if !selfUpdateEnabled() {
 		notify(logger, NoticeInfo, "Updates",
-			"This is a dev build (version \""+Version+"\"); release builds update themselves automatically.")
+			"This is a dev build (version \""+Version+"\"). Only release builds update automatically.")
 		return
 	}
 	v, err := applyUpdate(ctx)
@@ -159,18 +159,18 @@ func checkUpdateNow(ctx context.Context, stop context.CancelFunc, logger *log.Lo
 		// Fail-open, like the loop: say what happened, keep auto-retrying.
 		logger.Printf("update: manual check failed: %v", err)
 		notify(logger, NoticeInfo, "Could not check for updates",
-			"The check failed right now ("+err.Error()+"). The uploader keeps checking automatically.")
+			"Could not reach GitHub. StarLance keeps checking in the background.")
 	case v != "":
 		logger.Printf("update: manual check installed version %s, restarting", v)
 		reportUpdatePhase("restarting", v)
 		time.Sleep(restartDelay)
 		notify(logger, NoticeInfo, "StarLance App",
-			"Updated itself to "+v+" and is restarting.")
+			"Version "+v+" is installed. Restarting now.")
 		restartCh <- struct{}{}
 		stop()
 	default:
 		notify(logger, NoticeInfo, "You're up to date",
-			"The StarLance App is on the latest version ("+Version+").")
+			"Version "+Version+" is the latest.")
 	}
 }
 

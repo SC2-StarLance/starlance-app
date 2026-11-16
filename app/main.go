@@ -261,7 +261,7 @@ func main() {
 		// until the player quits.
 		logger.Printf("main: window unavailable: %v", err)
 		Notify(logger, NoticeProblem, "Window could not open",
-			"The tray still works; restart to retry.")
+			"Use the tray menu, or restart the app.")
 		<-ctx.Done()
 	}
 	stop()
@@ -285,7 +285,7 @@ func main() {
 		if err := relaunchSelf(logger, userArgs); err != nil {
 			logger.Printf("main: relaunch after update failed: %v", err)
 			Notify(logger, NoticeProblem, "Update installed",
-				"Start it again; your login stays.")
+				"Restart the app to finish updating. You stay logged in.")
 		}
 	}
 	logger.Println("main: exiting")

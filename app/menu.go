@@ -269,7 +269,7 @@ func doToggleStartWithSystem(logger *log.Logger, deps TrayDeps) {
 	next := !deps.Cfg.StartWithSystem
 	if err := setStartWithSystem(deps, next, logger); err != nil {
 		Notify(logger, NoticeProblem, "Could not update startup",
-			"Nothing was changed.")
+			"Launch at login is still set to what it was. Try again from Settings.")
 		return
 	}
 	logger.Printf("tray: launch at login = %v", next)

@@ -182,9 +182,15 @@ func TestRejectionMessagesAreActionable(t *testing.T) {
 			t.Errorf("reason %q has no message", reason)
 			continue
 		}
-		// Every message must tell the player the consequence in plain words.
-		if !strings.Contains(msg, "not count") && !strings.Contains(msg, "not uploaded") && !strings.Contains(msg, "cannot be scored") {
-			t.Errorf("reason %q message lacks a consequence statement: %q", reason, msg)
+		// The outcome ("Replay not uploaded") is already the toast title, so
+		// each message explains the cause and the next action as a complete
+		// sentence instead of repeating "so the game will not count" every
+		// time.
+		if !strings.HasSuffix(msg, ".") {
+			t.Errorf("reason %q message is not a complete sentence: %q", reason, msg)
+		}
+		if strings.Contains(msg, "so the game will not count") || strings.Contains(msg, "so it will not count") {
+			t.Errorf("reason %q message repeats the outcome instead of the cause: %q", reason, msg)
 		}
 	}
 }
