@@ -324,6 +324,7 @@ function renderMark(badge, blur, mid, top, full, star, league, rank) {
 let mmMatchId = null;
 let mmDismissed = "";
 let mmAccepting = "";
+let mmMismatch = false;
 let mmDeadline = 0;
 let mmStage = "";
 let mmFilledFor = "";
@@ -397,6 +398,7 @@ function renderMatchModal(p) {
     mmFilledFor = "";
     mmDismissed = "";
     mmAccepting = "";
+    mmMismatch = false;
     if (mmRaf !== null) cancelAnimationFrame(mmRaf);
     mmRaf = null;
     return;
@@ -434,6 +436,7 @@ function renderMatchModal(p) {
     state.mapName = "";
   }
   mmStage = stage;
+  mmMismatch = !!p.mismatch;
   modal.classList.remove("hidden");
   $("mmAccept").dataset.match = pid;
   $("mmDecline").dataset.match = pid;
@@ -452,11 +455,15 @@ function renderMatchModal(p) {
 // more after a click that had already been counted.
 function paintStage(stage) {
   mmStage = stage;
-  $("mmEyebrow").textContent = stage === "ready" ? "Match ready" : "Match found";
+  $("mmEyebrow").textContent = stage === "ready"
+    ? "Match ready"
+    : (stage === "accept" && mmMismatch ? "Unfair Match Warning" : "Match found");
   $("mmTitle").classList.toggle("hidden", stage === "accept");
   $("mmTitle").textContent = stage === "accept"
     ? "Accept match"
     : (stage === "waiting" ? "Waiting for your opponent" : "Your game is ready");
+  $("mmCard").classList.toggle("is-mismatch", mmMismatch);
+  $("mmAccept").textContent = mmMismatch ? "Play unranked" : "Accept";
   $("mmTimer").classList.toggle("hidden", stage === "ready");
   $("mmCard").classList.toggle("is-timer", stage !== "ready");
   $("mmActions").classList.toggle("off", stage !== "accept");
@@ -887,6 +894,7 @@ let noteHoldUntil = 0;
 // the backend's void reasons, and a left ready match is not an expiry.
 const VOID_NOTES = {
   declined: "The other player declined",
+  declined_mismatch: "Unrated match declined",
   left_ready: "The other player left the match",
   accept_timeout: "The other player did not accept",
 };
