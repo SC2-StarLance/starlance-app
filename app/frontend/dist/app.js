@@ -839,10 +839,11 @@ function renderSettings() {
   const list = $("folders");
   list.innerHTML = "";
   const dirs = boot.folders || [];
+  $("foldersHint").classList.toggle("hidden", dirs.length > 0);
   if (!dirs.length) {
     const li = document.createElement("li");
     li.className = "empty";
-    li.textContent = "No folder is being watched yet.";
+    li.textContent = "No folder yet. Press Add folder and pick where StarCraft II saves your replays.";
     list.appendChild(li);
   }
   for (const dir of dirs) {
@@ -866,6 +867,7 @@ function renderSettings() {
         boot.folders = await svc.RemoveFolder(dir);
         showSet("Folder removed.");
         renderSettings();
+        renderPanels();
       } catch (e) {
         showSet(String(e && e.message ? e.message : e), true);
       }
@@ -935,6 +937,16 @@ async function refresh() {
     state.lockUntil = s.locked_until ? Date.parse(s.locked_until) : 0;
     state.lockLabel = (lv && lv.reason === "declined") ? "Decline penalty" : "Leave penalty";
     updateLock();
+    // A folder can be added from the tray while this window is open; the
+    // status poll carries the current list so the blocked Play tab lifts.
+    const dirs = Array.isArray(s.folders) ? s.folders : [];
+    if (dirs.join("\n") !== (boot.folders || []).join("\n")) {
+      boot.folders = dirs;
+      renderSettings();
+    }
+    // A search can be live from the website while this window shows the
+    // blocked card; keep the stop button reachable either way.
+    renderPanels();
     showError("");
     renderStatus();
   } catch (e) {
@@ -973,6 +985,22 @@ function renderWho() {
   $("dot").classList.toggle("on", !!boot.loggedIn);
 }
 
+function noReplayFolder() {
+  return !(boot.folders && boot.folders.length);
+}
+
+// The Play tab is a checklist: log in, then have a replays folder. Queueing
+// stays blocked until both hold, because a game played with no watched folder
+// could never be uploaded. The folder card sends the player to Settings
+// instead of throwing a modal picker at launch.
+function renderPanels() {
+  const noFolder = noReplayFolder();
+  const busy = !!boot.loggedIn && state.kind && state.kind !== "idle";
+  $("folderPanel").classList.toggle("hidden", !noFolder);
+  $("loginPanel").classList.toggle("hidden", !!boot.loggedIn);
+  $("queuePanel").classList.toggle("hidden", !(boot.loggedIn && (!noFolder || busy)));
+}
+
 async function bootUp() {
   if (!svc) {
     showError("This window must be opened from the StarLance App.");
@@ -1003,8 +1031,7 @@ async function bootUp() {
   if (boot.siteURL) SITE = boot.siteURL;
   $("version").textContent = boot.version || "";
   renderWho();
-  $("loginPanel").classList.toggle("hidden", boot.loggedIn);
-  $("queuePanel").classList.toggle("hidden", !boot.loggedIn);
+  renderPanels();
   syncMapBans();
   renderRegions();
   renderSettings();
@@ -1264,6 +1291,13 @@ for (const tab of document.querySelectorAll(".tab")) {
   };
 }
 
+$("folderBtn").onclick = () => {
+  const tab = document.querySelector('.tab[data-tab="settings"]');
+  if (tab) tab.click();
+  const add = $("addFolder");
+  if (add) add.focus();
+};
+
 $("mbLoginBtn").onclick = () => {
   const tab = document.querySelector('.tab[data-tab="ladder"]');
   if (tab) tab.click();
@@ -1338,6 +1372,7 @@ $("addFolder").onclick = async () => {
     boot.folders = await svc.AddFolder();
     showSet("Folder added.");
     renderSettings();
+    renderPanels();
   } catch (e) {
     showSet(String(e && e.message ? e.message : e), true);
   }

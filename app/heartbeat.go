@@ -45,6 +45,12 @@ type Heartbeater struct {
 	client  *http.Client
 	logger  *log.Logger
 	offline bool // last send failed; log state transitions, not every miss
+	paused  bool // no replay folder, so the app cannot upload: stay offline
+
+	// Ready reports whether the app can actually upload a result. A player
+	// with no watched folder is not "online" for queue entry, even though the
+	// process is running, because any game they played could not be uploaded.
+	Ready func() bool
 }
 
 // NewHeartbeater builds a Heartbeater; status and notify are shared with the
@@ -89,6 +95,17 @@ func (h *Heartbeater) Run(ctx context.Context) {
 func (h *Heartbeater) tick(ctx context.Context) {
 	if h.auth == nil || !h.auth.LoggedIn() {
 		return
+	}
+	if h.Ready != nil && !h.Ready() {
+		if !h.paused {
+			h.paused = true
+			h.logger.Printf("heartbeat: paused until a replay folder is added")
+		}
+		return
+	}
+	if h.paused {
+		h.paused = false
+		h.logger.Printf("heartbeat: resumed; watching a replay folder again")
 	}
 	err := h.send(ctx)
 	switch {

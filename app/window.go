@@ -500,6 +500,11 @@ func (s *WindowService) folders() []string {
 }
 
 func (s *WindowService) StartQueue(race string, regions []string, preferred string) error {
+	// No watched folder means no uploaded result, so a queue entry would be a
+	// promise the app cannot keep. Block it and send the player to Settings.
+	if len(s.folders()) == 0 {
+		return errors.New("add your StarCraft II replays folder in Settings before queueing")
+	}
 	switch race {
 	case "terran", "protoss", "zerg", "random":
 	default:
@@ -631,6 +636,9 @@ func (s *WindowService) Status() (map[string]any, error) {
 	if state, _ := out["state"].(string); state != "searching" {
 		stopTraySpin()
 	}
+	// Folders ride along with the status poll so a folder added from the tray
+	// clears the Play tab's blocked state without reopening the window.
+	out["folders"] = s.folders()
 	return out, nil
 }
 

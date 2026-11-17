@@ -33,6 +33,12 @@
 
     <main class="stage">
       <section id="tab-ladder" class="pane">
+        <section id="folderPanel" class="card hidden">
+          <h2>Pick your replays folder</h2>
+          <p class="sub">The app has not found where StarCraft II saves replays, so it cannot upload your games or let you queue. Pick the folder once in Settings.</p>
+          <button id="folderBtn" class="btn primary wide">Open Settings</button>
+        </section>
+
         <section id="loginPanel" class="card hidden">
           <h2>Log in to queue</h2>
           <p class="sub">Log in with Battle.net to find players looking for a StarLance game.</p>
@@ -162,6 +168,7 @@
 
           <section class="card span2">
             <p class="eyebrow">Replays</p>
+            <p class="hint hidden" id="foldersHint">StarCraft II saves replays under Documents/StarCraft II/Accounts. Add the Replays folder for your account.</p>
             <ul class="folders" id="folders"></ul>
             <div class="row wrap">
               <button id="addFolder" class="btn ghost">Add folder</button>

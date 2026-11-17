@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -53,6 +54,34 @@ func TestHeartbeatSendSendsAPIKey(t *testing.T) {
 	}
 	if gotKey != "hb-key" {
 		t.Errorf("X-API-Key = %q, want %q", gotKey, "hb-key")
+	}
+}
+
+// TestHeartbeatPausedWithoutReplayFolder: a running app with no watched
+// folder cannot upload, so it must not keep reporting itself online for queue
+// entry. Adding a folder resumes the heartbeat.
+func TestHeartbeatPausedWithoutReplayFolder(t *testing.T) {
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		atomic.AddInt32(&calls, 1)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+
+	canUpload := false
+	hb := NewHeartbeater(&Config{BackendURL: srv.URL}, testAuth(t, "hb-key", "player-1"), NewStatus(StatusWatching), nil, testLogger())
+	hb.Ready = func() bool { return canUpload }
+
+	hb.tick(context.Background())
+	hb.tick(context.Background())
+	if got := atomic.LoadInt32(&calls); got != 0 {
+		t.Fatalf("heartbeat sent %d time(s) with no replay folder, want 0", got)
+	}
+
+	canUpload = true
+	hb.tick(context.Background())
+	if got := atomic.LoadInt32(&calls); got != 1 {
+		t.Fatalf("heartbeat sent %d time(s) after a folder appeared, want 1", got)
 	}
 }
 

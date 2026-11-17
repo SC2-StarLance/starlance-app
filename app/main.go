@@ -161,6 +161,12 @@ func main() {
 	// It feeds the backend's queue-entry systems check — no heartbeat, no
 	// queue entry — and resumes on its own after connectivity or login issues.
 	hb := NewHeartbeater(cfg, auth, status, Notify, logger)
+
+	w := NewWatcher(replayDirs, logger, fileCh)
+	// With no folder there is nothing to upload, so the app must not report
+	// itself online for queue entry. The tray/window picker flips this back on
+	// as soon as a folder is watched.
+	hb.Ready = func() bool { return len(w.Dirs()) > 0 }
 	var heartbeatWG sync.WaitGroup
 	heartbeatWG.Add(1)
 	go func() {
@@ -168,7 +174,6 @@ func main() {
 		hb.Run(ctx)
 	}()
 
-	w := NewWatcher(replayDirs, logger, fileCh)
 	watcherDone := make(chan error, 1)
 	go func() { watcherDone <- w.Run() }()
 
@@ -329,14 +334,10 @@ func resolveReplayDirs(cfg *Config, override, prefixFilter string, logger *log.L
 	if len(dirs) > 0 {
 		return dirs
 	}
-	logger.Println("main: replay folder not found automatically; asking via folder picker")
-	if dir := PickFolder(logger, "Choose the StarCraft II multiplayer replays folder"); dir != "" {
-		cfg.ReplayPath = dir
-		if err := SaveConfig(settingsPath, cfg); err != nil {
-			logger.Printf("main: could not persist chosen replay_path: %v", err)
-		}
-		return []string{dir}
-	}
+	// No first-run dialog: a modal folder picker out of nowhere reads as a
+	// broken app. The window shows the "pick your replays folder" card
+	// instead, queueing stays blocked, and Settings owns the picker.
+	logger.Println("main: no replay folder found; waiting for the player to add one in Settings")
 	return nil
 }
 

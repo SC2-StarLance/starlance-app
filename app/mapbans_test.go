@@ -15,6 +15,9 @@ func testWindowService(t *testing.T, srv *httptest.Server) *WindowService {
 		auth:   testAuth(t, "test-key", "player-1"),
 		client: srv.Client(),
 		logger: testLogger(),
+		// Queue tests exercise region/body logic, so pretend a folder is
+		// watched; the no-folder refusal has its own test.
+		deps: TrayDeps{WatchedDirs: func() []string { return []string{"/tmp/replays"} }},
 	}
 }
 
