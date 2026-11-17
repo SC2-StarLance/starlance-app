@@ -107,6 +107,9 @@ func runWindow(cfg *Config, auth *AuthState, logger *log.Logger, deps TrayDeps, 
 	// player sees the main window or the small update card. The tray toggle
 	// tracks whichever one is on screen.
 	windowVisible.Store(false)
+	// The update may swap the binary at any time, but the restart waits for an
+	// idle session. This is the only component that can read /queue/status.
+	setSessionGate(svc.canRestartNow)
 	go svc.watchHiddenMatches()
 	return wails.Run(&options.App{
 		Title:             windowTitle(),
@@ -164,14 +167,26 @@ func (s *WindowService) onUpdatePhase(p UpdatePhase) {
 	case "checking":
 		// Nothing to show: the window stays hidden until a download starts.
 	case "downloading":
-		if !updateCardShown.Swap(true) {
-			runtime.WindowSetSize(ctx, updateCardWidth, updateCardHeight)
-			runtime.WindowCenter(ctx)
-			runtime.WindowShow(ctx)
-			windowVisible.Store(true)
+		// The card belongs to the startup path. A mid-session check leaves the
+		// full window alone instead of shrinking it under the player.
+		if !mainWindowShown.Load() {
+			if !updateCardShown.Swap(true) {
+				runtime.WindowSetSize(ctx, updateCardWidth, updateCardHeight)
+				runtime.WindowCenter(ctx)
+				runtime.WindowShow(ctx)
+				windowVisible.Store(true)
+			}
+			runtime.EventsEmit(ctx, "update-phase", p)
 		}
-		runtime.EventsEmit(ctx, "update-phase", p)
-	case "installed", "restarting":
+	case "installed":
+		if !mainWindowShown.Load() {
+			runtime.EventsEmit(ctx, "update-phase", p)
+		}
+	case "ready":
+		// The new binary is installed but the player is queued or in a match.
+		// Give them the app now; the restart waits for idle.
+		s.showMainWindow()
+	case "restarting":
 		runtime.EventsEmit(ctx, "update-phase", p)
 	case "uptodate":
 		s.showMainWindow()
@@ -642,6 +657,36 @@ func (s *WindowService) Status() (map[string]any, error) {
 	return out, nil
 }
 
+// canRestartNow gates the self-update restart. The binary swap is safe at any
+// time, but a restart during a queue search, the map draft, or a live match
+// would drop the player out of the queue or lose the replay: the watcher only
+// uploads files that appear while the app is running, so a replay written
+// during the restart is never sent. A pending match covers the draft, the
+// ready stage, and the game itself, and stays pending until both replays
+// land; waiting through it is deliberate because a lost result is worse than
+// a late update. Ambiguity refuses the restart: a network failure could hide a
+// live game, while "not logged in" or an expired key means this app has no
+// session to interrupt.
+func (s *WindowService) canRestartNow() bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var out struct {
+		State        string          `json:"state"`
+		PendingMatch json.RawMessage `json:"pending_match"`
+	}
+	if err := s.callCtx(ctx, http.MethodGet, "/queue/status", nil, &out); err != nil {
+		if errors.Is(err, errNotLoggedIn) {
+			return true
+		}
+		var unauthorized *errUnauthorized
+		return errors.As(err, &unauthorized)
+	}
+	if out.State == "searching" {
+		return false
+	}
+	return len(out.PendingMatch) == 0 || string(out.PendingMatch) == "null"
+}
+
 func (s *WindowService) ensureAccountID() (string, error) {
 	s.mu.Lock()
 	id := s.accountID
@@ -667,9 +712,17 @@ func (s *WindowService) ensureAccountID() (string, error) {
 }
 
 func (s *WindowService) call(method, path string, body any, out any) error {
+	return s.callCtx(context.Background(), method, path, body, out)
+}
+
+// errNotLoggedIn means there is no saved API key. It is a sentinel so callers
+// can tell "nothing this app can be doing" from a network failure.
+var errNotLoggedIn = errors.New("log in to StarLance first")
+
+func (s *WindowService) callCtx(ctx context.Context, method, path string, body any, out any) error {
 	key, _ := s.auth.Credentials()
 	if key == "" {
-		return errors.New("log in to StarLance first")
+		return errNotLoggedIn
 	}
 	var rdr io.Reader
 	if body != nil {
@@ -679,7 +732,7 @@ func (s *WindowService) call(method, path string, body any, out any) error {
 		}
 		rdr = bytes.NewReader(raw)
 	}
-	req, err := http.NewRequest(method, s.cfg.BaseURL()+path, rdr)
+	req, err := http.NewRequestWithContext(ctx, method, s.cfg.BaseURL()+path, rdr)
 	if err != nil {
 		return err
 	}

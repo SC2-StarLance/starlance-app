@@ -50,6 +50,7 @@ import (
 	"regexp"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Masterminds/semver/v3"
@@ -71,7 +72,79 @@ const (
 	// restartDelay lets the card paint "Restarting" before the process swap
 	// tears the window down; without it the last state is an unseen frame.
 	restartDelay = 900 * time.Millisecond
+
+	// An installed update waits for a safe moment and re-checks the queue
+	// every half minute rather than dropping the player out of it.
+	updateIdleRetry = 30 * time.Second
 )
+
+// sessionGate answers whether the app may restart for an update. The window
+// installs it (it is the only component that can read /queue/status); nil
+// means "allowed", which keeps headless callers and tests simple. Swapping
+// the binary is safe at any time, but the restart is not: the watcher uploads
+// a replay only when it appears while the app is running, so a restart
+// during a match loses the result.
+var sessionGate atomic.Pointer[func() bool]
+
+// setSessionGate installs the idle-session check used before a restart. The
+// window installs it once at startup; the pointer keeps the tray's manual
+// check and the background loop race-free.
+func setSessionGate(gate func() bool) {
+	sessionGate.Store(&gate)
+}
+
+func restartAllowed() bool {
+	gate := sessionGate.Load()
+	return gate == nil || (*gate)()
+}
+
+// awaitIdle blocks until canRestart reports that the session is safe to
+// interrupt. It returns false when ctx ends first; the installed binary then
+// takes effect on the next launch.
+func awaitIdle(ctx context.Context, canRestart func() bool, retry time.Duration) bool {
+	if canRestart() {
+		return true
+	}
+	ticker := time.NewTicker(retry)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return false
+		case <-ticker.C:
+			if canRestart() {
+				return true
+			}
+		}
+	}
+}
+
+// restartForUpdate performs the process handover. The binary is already on
+// disk, so this only announces and relaunches.
+func restartForUpdate(stop context.CancelFunc, logger *log.Logger, notify Notifier, restartCh chan<- struct{}, version string) {
+	reportUpdatePhase("restarting", version)
+	time.Sleep(restartDelay)
+	notify(logger, NoticeInfo, "StarLance App",
+		"Version "+version+" is installed. Restarting now.")
+	restartCh <- struct{}{}
+	stop()
+}
+
+// waitForIdleAndRestart holds an installed update until the player is out of
+// the queue and out of a match. Waiting costs nothing: the swap already
+// happened, and the next launch uses the new binary even if the app quits
+// before idle.
+func waitForIdleAndRestart(ctx context.Context, stop context.CancelFunc, logger *log.Logger, notify Notifier, restartCh chan<- struct{}, version string) {
+	if !restartAllowed() {
+		notify(logger, NoticeInfo, "StarLance App",
+			"Version "+version+" is ready. It will restart when you are not in a queue or a match.")
+		reportUpdatePhase("ready", version)
+		if !awaitIdle(ctx, restartAllowed, updateIdleRetry) {
+			return
+		}
+	}
+	restartForUpdate(stop, logger, notify, restartCh, version)
+}
 
 // UpdatePhase is one step of a check-and-swap cycle, reported to the window
 // so the small update card can say what is happening.
@@ -107,8 +180,9 @@ func reportUpdatePhase(phase, version string) {
 var Version = "dev"
 
 // runAutoUpdate drives the update loop for the life of the process. On a
-// successful swap it notifies the player in plain words, signals restartCh
-// (main shuts everything down cleanly and relaunches), and returns.
+// successful swap it waits for an idle session, then notifies the player in
+// plain words, signals restartCh (main shuts everything down cleanly and
+// relaunches), and returns.
 func runAutoUpdate(ctx context.Context, stop context.CancelFunc, logger *log.Logger, notify Notifier, restartCh chan<- struct{}) {
 	if !selfUpdateEnabled() {
 		logger.Printf("update: %q build - self-update disabled", Version)
@@ -129,13 +203,8 @@ func runAutoUpdate(ctx context.Context, stop context.CancelFunc, logger *log.Log
 			// covers "repo not published yet" for as long as it takes.
 			logger.Printf("update: check failed (will retry): %v", err)
 		} else if v != "" {
-			logger.Printf("update: replaced binary with version %s, restarting", v)
-			reportUpdatePhase("restarting", v)
-			time.Sleep(restartDelay)
-			notify(logger, NoticeInfo, "StarLance App",
-				"Version "+v+" is installed. Restarting now.")
-			restartCh <- struct{}{}
-			stop()
+			logger.Printf("update: replaced binary with version %s", v)
+			waitForIdleAndRestart(ctx, stop, logger, notify, restartCh, v)
 			return
 		}
 		timer.Reset(updateCheckInterval)
@@ -161,13 +230,8 @@ func checkUpdateNow(ctx context.Context, stop context.CancelFunc, logger *log.Lo
 		notify(logger, NoticeInfo, "Could not check for updates",
 			"Could not reach GitHub. StarLance keeps checking in the background.")
 	case v != "":
-		logger.Printf("update: manual check installed version %s, restarting", v)
-		reportUpdatePhase("restarting", v)
-		time.Sleep(restartDelay)
-		notify(logger, NoticeInfo, "StarLance App",
-			"Version "+v+" is installed. Restarting now.")
-		restartCh <- struct{}{}
-		stop()
+		logger.Printf("update: manual check installed version %s", v)
+		waitForIdleAndRestart(ctx, stop, logger, notify, restartCh, v)
 	default:
 		notify(logger, NoticeInfo, "You're up to date",
 			"Version "+Version+" is the latest.")

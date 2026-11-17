@@ -15,6 +15,8 @@ import (
 	"errors"
 	"io"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -293,5 +295,94 @@ func TestParseSlug(t *testing.T) {
 	}
 	if _, _, err := selfupdate.ParseSlug("not a slug").GetSlug(); err == nil {
 		t.Error("a malformed slug must fail")
+	}
+}
+
+func TestAwaitIdle(t *testing.T) {
+	// Free session: no wait at all.
+	if !awaitIdle(context.Background(), func() bool { return true }, time.Hour) {
+		t.Fatal("an idle session must be allowed to restart immediately")
+	}
+
+	// Busy session that never clears: cancellation ends the wait and reports
+	// that the restart did not happen.
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan bool, 1)
+	go func() {
+		done <- awaitIdle(ctx, func() bool { return false }, 5*time.Millisecond)
+	}()
+	time.Sleep(20 * time.Millisecond)
+	cancel()
+	select {
+	case allowed := <-done:
+		if allowed {
+			t.Fatal("a cancelled wait must not report an idle session")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("awaitIdle did not return after cancellation")
+	}
+
+	// Busy session that clears: the wait notices and returns true.
+	release := make(chan struct{})
+	busy := func() bool {
+		select {
+		case <-release:
+			return true
+		default:
+			return false
+		}
+	}
+	ctx2, cancel2 := context.WithCancel(context.Background())
+	defer cancel2()
+	done2 := make(chan bool, 1)
+	go func() {
+		done2 <- awaitIdle(ctx2, busy, 5*time.Millisecond)
+	}()
+	time.Sleep(20 * time.Millisecond)
+	close(release)
+	select {
+	case ok := <-done2:
+		if !ok {
+			t.Fatal("awaitIdle must report true once the session is idle")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("awaitIdle did not notice the idle session")
+	}
+}
+
+func canRestartNowWith(t *testing.T, status int, body string) bool {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+	return testWindowService(t, srv).canRestartNow()
+}
+
+func TestCanRestartNow(t *testing.T) {
+	if canRestartNowWith(t, http.StatusOK, `{"state":"searching","pending_match":null}`) {
+		t.Fatal("a searching session must block the restart")
+	}
+	if canRestartNowWith(t, http.StatusOK, `{"state":"idle","pending_match":{"id":"m1"}}`) {
+		t.Fatal("a pending match must block the restart")
+	}
+	if !canRestartNowWith(t, http.StatusOK, `{"state":"idle","pending_match":null}`) {
+		t.Fatal("an idle session must allow the restart")
+	}
+	if canRestartNowWith(t, http.StatusBadGateway, `{"message":"down"}`) {
+		t.Fatal("an ambiguous status failure must refuse the restart")
+	}
+
+	// Logged out: this app has no session to interrupt, even when the
+	// backend is unreachable.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+	}))
+	defer srv.Close()
+	svc := testWindowService(t, srv)
+	svc.auth = testAuth(t, "", "")
+	if !svc.canRestartNow() {
+		t.Fatal("a logged-out session must not block the restart")
 	}
 }
