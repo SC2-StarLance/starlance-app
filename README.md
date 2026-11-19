@@ -42,10 +42,14 @@ The app installs itself in a stable per-user folder and runs from there:
 | Linux | `~/.local/share/starlance-uploader/sc2-replay-uploader`, plus an app-menu entry |
 
 The downloaded file can be deleted afterwards. An existing install is never
-overwritten; the app and its updater own that file. To uninstall, quit the
-app, turn off **Start with system** if you enabled it, then delete the file
-or app listed above. Your login, settings, and upload history live in a
-separate per-user state folder and can be removed by hand:
+overwritten; the app and its updater own that file. To uninstall, open
+**Settings** and click **Uninstall StarLance App**. The app removes its
+startup entry, its shortcut or app-menu entry, its installed copy, and the
+state folder below, then quits. A copy you launched from a download folder
+stays where you put it; delete that file by hand after the app quits.
+
+If you prefer to remove files by hand, your login, settings, and upload
+history live in a separate per-user state folder:
 
 | Platform | State folder |
 | -------- | ------------ |

@@ -41,8 +41,9 @@ type WindowService struct {
 	stop      context.CancelFunc
 	restartCh chan struct{}
 
-	mu        sync.Mutex
-	accountID string
+	mu           sync.Mutex
+	accountID    string
+	uninstalling atomic.Bool
 }
 
 // Bootstrap is the first screen's data: who is logged in and what they can

@@ -733,6 +733,17 @@ h2 {
 }
 
 #quitBtn { margin-top: 14px; }
+#uninstallBtn { margin-top: 14px; }
+
+/* ---------- uninstall confirmation ---------- */
+
+.uninstall-card { max-width: 460px; }
+.uninstall-card .mm-lead {
+  margin-bottom: 16px;
+  color: var(--soft);
+  font-weight: 500;
+  line-height: 1.5;
+}
 
 /* ---------- map bans ---------- */
 

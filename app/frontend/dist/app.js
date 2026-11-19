@@ -838,8 +838,8 @@ function renderSettings() {
     ? "This copy runs from " + installPath
     : "This copy runs from the folder you downloaded it to.";
   $("setUninstall").textContent = installPath
-    ? "To uninstall, quit the app, turn off Start with system if you enabled it, then delete that file or app."
-    : "";
+    ? "The Uninstall button below removes this copy, its startup entry, and every saved login and setting."
+    : "The Uninstall button below removes your startup entry and every saved login and setting. The app file stays where you launched it.";
   $("setInstall").classList.toggle("hidden", false);
   $("startSystem").checked = !!boot.startWithSystem;
 
@@ -1412,6 +1412,37 @@ $("checkUpdate").onclick = () => {
 };
 
 $("quitBtn").onclick = () => svc.Quit();
+
+function showUninstallConfirm() {
+  $("uninstallWarn").textContent = boot.installPath
+    ? "This removes the app, any Start with system entry, and every saved login, setting, and upload history on this PC. Your replays and your StarLance account are not affected."
+    : "This removes any Start with system entry and every saved login, setting, and upload history on this PC. If another StarLance App is installed, run Uninstall from that copy instead. The app file stays where you launched it; delete it by hand. Your replays and your StarLance account are not affected.";
+  $("uninstallModal").classList.remove("hidden");
+  $("uninstallCancel").focus();
+}
+
+function hideUninstallConfirm() {
+  $("uninstallModal").classList.add("hidden");
+}
+
+$("uninstallBtn").onclick = showUninstallConfirm;
+$("uninstallCancel").onclick = hideUninstallConfirm;
+$("uninstallModal").onclick = (e) => {
+  if (e.target === $("uninstallModal")) hideUninstallConfirm();
+};
+$("uninstallConfirm").onclick = async () => {
+  const btn = $("uninstallConfirm");
+  btn.disabled = true;
+  btn.textContent = "Removing\u2026";
+  try {
+    await svc.Uninstall();
+  } catch (e) {
+    hideUninstallConfirm();
+    btn.disabled = false;
+    btn.textContent = "Uninstall";
+    showSet("StarLance App could not remove itself. Quit it, then delete the app file by hand.", true);
+  }
+};
 
 async function copyToClipboard(text) {
   try {

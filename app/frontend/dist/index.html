@@ -206,6 +206,14 @@
               <button id="quitBtn" class="btn danger">Quit StarLance App</button>
             </div>
           </section>
+
+          <section class="card span2">
+            <p class="eyebrow">Uninstall</p>
+            <div class="row">
+              <span class="value">Remove the app, its saved logins, and its settings from this computer.</span>
+              <button id="uninstallBtn" class="btn danger">Uninstall StarLance App</button>
+            </div>
+          </section>
         </div>
 
         <p class="note hidden" id="setNote"></p>
@@ -262,6 +270,18 @@
       </div>
       <ol class="mm-steps" id="mmSteps"></ol>
       <button class="btn primary" id="mmDone">Close</button>
+    </div>
+  </div>
+</div>
+
+  <div class="mm hidden" id="uninstallModal" role="dialog" aria-modal="true" aria-labelledby="uninstallEyebrow">
+  <div class="mm-card uninstall-card">
+    <p class="mm-eyebrow" id="uninstallEyebrow">Uninstall</p>
+    <h2 class="mm-title">Remove StarLance App?</h2>
+    <p class="mm-lead" id="uninstallWarn">This removes the app, any Start with system entry, and every saved login, setting, and upload history on this PC. Your replays and your StarLance account are not affected.</p>
+    <div class="mm-actions">
+      <button class="btn ghost" id="uninstallCancel">Keep StarLance App</button>
+      <button class="btn danger" id="uninstallConfirm">Uninstall</button>
     </div>
   </div>
 </div>

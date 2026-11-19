@@ -46,7 +46,7 @@ func setRunAtStart(exe string, enable bool) error {
 	}
 	defer key.Close()
 	if !enable {
-		if err := key.DeleteValue(runValueName); err != nil && err != registry.ErrNotExist {
+		if err := key.DeleteValue(runValueNameFor(profileName)); err != nil && err != registry.ErrNotExist {
 			return err
 		}
 		return nil
