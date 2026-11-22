@@ -551,9 +551,6 @@ function fillReady(p, acc) {
     const pct = h2h.win_rate == null ? "" : " (" + Math.round(h2h.win_rate * 100) + "% WR)";
     h2hEl.textContent = "Record " + score + pct;
     h2hEl.classList.remove("hidden");
-  } else if (h2h) {
-    h2hEl.textContent = "First meeting";
-    h2hEl.classList.remove("hidden");
   } else {
     h2hEl.textContent = "";
     h2hEl.classList.add("hidden");
