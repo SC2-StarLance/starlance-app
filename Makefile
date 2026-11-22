@@ -11,7 +11,7 @@ MACOS_ARCH  ?= $(shell go env GOARCH)
 APP_NAME    := StarLance App
 APP_DIR     := $(BINDIR)/$(APP_NAME).app
 
-.PHONY: all assets build-linux build-windows build-macos app-macos icon sign test clean
+.PHONY: all assets build-linux appimage-linux build-windows build-macos app-macos icon sign test clean
 
 all: build-linux build-windows
 
@@ -22,6 +22,10 @@ assets:
 
 build-linux: assets
 	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags production,webkit2_41 -ldflags "$(LDFLAGS)" -o $(BINDIR)/$(BINARY) ./app
+
+# Single-file Linux download: the same thin AppImage the release publishes.
+appimage-linux: build-linux
+	packaging/linux/build-appimage.sh "$(BINDIR)/$(BINARY)" "$(BINDIR)/$(BINARY)-linux-amd64.AppImage"
 
 build-windows: assets
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -tags production -ldflags "$(WIN_LDFLAGS)" -o $(BINDIR)/$(BINARY_EXE) ./app

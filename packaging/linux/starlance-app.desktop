@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=StarLance App
+Comment=Automates StarLance ladder matchmaking and replay uploads
+Exec=starlance-app
+Icon=starlance-app
+Terminal=false
+Categories=Game;
+StartupWMClass=starlance-app

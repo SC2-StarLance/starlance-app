@@ -10,6 +10,8 @@ name: release
 #   starlance-app-windows-<arch>.exe       the same Windows binary, unpacked for the
 #                                          website's one-click download (the updater
 #                                          filters it out)
+#   starlance-app-linux-<arch>.AppImage    the same Linux binary, single-file download
+#   starlance-app-macos-universal.zip      the .app bundle, one download for both Macs
 #
 # Asset names and the single-binary zip shape are the contract detected by
 # github.com/creativeprojects/go-selfupdate (update.go): assets suffixed
@@ -19,10 +21,10 @@ name: release
 # the protected "release" environment. Change workflow, signing and update.go
 # together.
 #
-# macOS additionally ships a double-clickable .app zip for the first install
-# (Finder + Dock icon). Its name deliberately avoids the "darwin" token the
-# library matches on, so the updater only ever sees the plain-binary zip and
-# replaces Contents/MacOS/starlance-app inside the bundle.
+# macOS additionally ships a universal double-clickable .app zip for the first
+# install (Finder + Dock icon). Its name deliberately avoids the "darwin"
+# token the library matches on, so the updater only ever sees the plain-binary
+# zips and replaces Contents/MacOS/starlance-app inside the bundle.
 
 on:
   push:
@@ -126,6 +128,15 @@ jobs:
             -ldflags "-s -w ${{ matrix.ldflags }} -X main.Version=${VERSION}" \
             -o "dist/${{ matrix.binary }}" ./app
 
+      # Linux one-click download: a single executable file, no extraction.
+      # Thin like the zip: it uses the host's GTK/WebKit.
+      - name: Package Linux AppImage
+        if: matrix.goos == 'linux'
+        run: |
+          packaging/linux/build-appimage.sh \
+            "dist/${{ matrix.binary }}" \
+            "dist/starlance-app-linux-${{ matrix.goarch }}.AppImage"
+
       - name: Package binary
         run: |
           cd dist
@@ -136,32 +147,40 @@ jobs:
           else
             rm "${{ matrix.binary }}"
           fi
-          for f in *.zip *.exe; do
+          for f in *.zip *.exe *.AppImage; do
             [ -e "$f" ] || continue
             sha256sum "$f" | awk '{print $1}' > "$f.sha256"
           done
           ls -l
 
       # macOS first install: Finder needs a bundle (Dock icon, Gatekeeper
-      # dialog, right-click Open). Built here so the .app always matches the
-      # binary the updater will later replace inside it.
+      # dialog). Built once, universal, so Intel Macs on browsers without user
+      # agent hints get the same download as Apple silicon. The plain per-arch
+      # zips above stay the updater payload.
       - name: Package macOS app bundle
-        if: matrix.goos == 'darwin'
+        if: matrix.goos == 'darwin' && matrix.goarch == 'arm64'
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           APP="dist/StarLance App.app"
           mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-          CGO_ENABLED=1 GOOS=darwin GOARCH=${{ matrix.goarch }} \
-            go build -tags production -trimpath \
-            -ldflags "-s -w -X main.Version=${VERSION}" \
-            -o "$APP/Contents/MacOS/starlance-app" ./app
+          for arch in arm64 amd64; do
+            CGO_ENABLED=1 GOOS=darwin GOARCH="$arch" \
+              go build -tags production -trimpath \
+              -ldflags "-s -w -X main.Version=${VERSION}" \
+              -o "dist/starlance-app-darwin-${arch}-bundle" ./app
+          done
+          lipo -create \
+            dist/starlance-app-darwin-arm64-bundle \
+            dist/starlance-app-darwin-amd64-bundle \
+            -output "$APP/Contents/MacOS/starlance-app"
+          rm dist/starlance-app-darwin-*-bundle
           sh packaging/macos/make-icns.sh app/assets/sl-logo.png "$APP/Contents/Resources/AppIcon.icns"
           sed -e "s/__VERSION__/${VERSION}/g" packaging/macos/Info.plist > "$APP/Contents/Info.plist"
           cd dist
           # No "darwin" in this name on purpose: the updater must not match it.
-          zip -qry "starlance-app-macos-${{ matrix.goarch }}.zip" "StarLance App.app"
-          sha256sum "starlance-app-macos-${{ matrix.goarch }}.zip" \
-            | awk '{print $1}' > "starlance-app-macos-${{ matrix.goarch }}.zip.sha256"
+          zip -qry "starlance-app-macos-universal.zip" "StarLance App.app"
+          sha256sum "starlance-app-macos-universal.zip" \
+            | awk '{print $1}' > "starlance-app-macos-universal.zip.sha256"
           rm -rf "StarLance App.app"
           ls -l
 
@@ -192,7 +211,7 @@ jobs:
       - name: Sign release assets
         env:
           MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
-        run: go run ./tools/signrelease dist/*.zip dist/*.exe
+        run: go run ./tools/signrelease dist/*.zip dist/*.exe dist/*.AppImage
 
       - name: Publish release
         env:
@@ -200,7 +219,7 @@ jobs:
         run: |
           ls -l dist
           gh release create "${GITHUB_REF_NAME}" \
-            dist/*.zip dist/*.exe dist/*.sha256 dist/*.minisig \
+            dist/*.zip dist/*.exe dist/*.AppImage dist/*.sha256 dist/*.minisig \
             --repo "${GITHUB_REPOSITORY}" \
             --title "StarLance App ${GITHUB_REF_NAME}" \
             --generate-notes

@@ -19,17 +19,23 @@ Get the latest build from the
 | Platform | File |
 | -------- | ---- |
 | Windows (64-bit) | `starlance-app-windows-amd64.exe` |
-| Linux (64-bit) | `starlance-app-linux-amd64.zip` |
-| macOS, Apple silicon | `starlance-app-macos-arm64.zip` |
-| macOS, Intel | `starlance-app-macos-amd64.zip` |
+| Linux (64-bit) | `starlance-app-linux-amd64.AppImage` |
+| macOS, Apple silicon or Intel | `starlance-app-macos-universal.zip` |
 
 The Windows download is a single `.exe`: double-click it and the app starts.
-The macOS downloads are a `.app` bundle in a zip: unzip it, then right-click
-the app and choose **Open** the first time. Release files carry a project
-signature so the app can verify an update before installing it, but the app
-itself is not code-signed or notarized by Apple, so Gatekeeper warns once;
-after that it opens normally. The Linux download is a zip with one binary
-inside: unzip it and run `starlance-app`.
+If Windows shows a SmartScreen warning, choose **More info**, then
+**Run anyway**.
+
+The macOS download is a universal `.app` bundle in a zip: unzip it and open
+the app. The app is not notarized by Apple, so Gatekeeper warns once; open
+**System Settings**, then **Privacy & Security**, and choose **Open Anyway**.
+
+The Linux download is an AppImage: one file, no extraction. Make it
+executable if your file manager does not, then run it. It uses your
+distribution's GTK/WebKit, the same libraries the zip build needs.
+
+Release files carry a project signature so the app can verify an update
+before installing it.
 
 ## First launch
 
