@@ -29,7 +29,7 @@ func removeUninstallRegistrations(logger *log.Logger) error {
 		}
 		base = filepath.Join(home, ".config")
 	}
-	entries, _ := filepath.Glob(filepath.Join(base, "autostart", "starlance-replay-uploader*.desktop"))
+	entries, _ := filepath.Glob(filepath.Join(base, "autostart", "starlance-app*.desktop"))
 	var firstErr error
 	for _, path := range entries {
 		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) && firstErr == nil {

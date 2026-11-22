@@ -21,14 +21,14 @@ jobs:
           - runner: ubuntu-latest
             goos: linux
             goarch: amd64
-            binary: sc2-replay-uploader
+            binary: starlance-app
             tags: production,webkit2_41
             cgo: "1"
             ldflags: ""
           - runner: ubuntu-latest
             goos: windows
             goarch: amd64
-            binary: sc2-replay-uploader.exe
+            binary: starlance-app.exe
             tags: production
             cgo: "0"
             ldflags: "-H windowsgui"

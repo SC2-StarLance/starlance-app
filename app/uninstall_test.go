@@ -27,7 +27,7 @@ func TestCheckUninstallPathRefusesDanger(t *testing.T) {
 		{"app bundle on macOS", filepath.Join(base, "Applications", "StarLance App.app"), false},
 		{"home folder", home, true},
 		{"ancestor of home", base, true},
-		{"relative path", filepath.Join("starlance-uploader"), true},
+		{"relative path", filepath.Join("starlance-app"), true},
 		{"filesystem root", string(filepath.Separator), true},
 	}
 	for _, tc := range cases {

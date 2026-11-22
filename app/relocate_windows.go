@@ -21,7 +21,7 @@ func stableInstallPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(cache, "Programs", "StarLance", "sc2-replay-uploader.exe"), nil
+	return filepath.Join(cache, "Programs", "StarLance", "starlance-app.exe"), nil
 }
 
 // installLocation reports the binary this copy installed itself as, or ""

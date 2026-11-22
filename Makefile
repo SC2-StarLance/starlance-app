@@ -1,5 +1,5 @@
-BINARY      := sc2-replay-uploader
-BINARY_EXE  := sc2-replay-uploader.exe
+BINARY      := starlance-app
+BINARY_EXE  := starlance-app.exe
 BINDIR      := bin
 VERSION     ?= dev
 LDFLAGS     := -X main.Version=$(VERSION)

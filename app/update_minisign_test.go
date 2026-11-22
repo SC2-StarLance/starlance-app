@@ -33,10 +33,10 @@ func testSignature(t *testing.T, data []byte) []byte {
 func TestMinisignValidatorAcceptsSignedAsset(t *testing.T) {
 	release := []byte("zip payload")
 	v := minisignValidator{publicKey: testMinisignPublicKey}
-	if name := v.GetValidationAssetName("sc2-replay-uploader-linux-amd64.zip"); name != "sc2-replay-uploader-linux-amd64.zip.minisig" {
+	if name := v.GetValidationAssetName("starlance-app-linux-amd64.zip"); name != "starlance-app-linux-amd64.zip.minisig" {
 		t.Fatalf("validation asset name = %q", name)
 	}
-	if err := v.Validate("sc2-replay-uploader-linux-amd64.zip", release, testSignature(t, release)); err != nil {
+	if err := v.Validate("starlance-app-linux-amd64.zip", release, testSignature(t, release)); err != nil {
 		t.Fatalf("signed asset rejected: %v", err)
 	}
 }

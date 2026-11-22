@@ -17,7 +17,7 @@ const runKeyPath = `Software\Microsoft\Windows\CurrentVersion\Run`
 
 // runValueName is the Run-key value; stable so toggling overwrites instead
 // of accumulating duplicates.
-const runValueName = "StarLanceReplayUploader"
+const runValueName = "StarLanceApp"
 
 // runValueNameFor suffixes the value for -profile instances, so two accounts
 // keep their own login item instead of overwriting one shared value.

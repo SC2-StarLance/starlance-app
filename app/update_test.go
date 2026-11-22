@@ -60,7 +60,7 @@ func TestCurrentExecutable(t *testing.T) {
 
 func TestRemoveOldBinary(t *testing.T) {
 	dir := t.TempDir()
-	exe := filepath.Join(dir, "sc2-replay-uploader")
+	exe := filepath.Join(dir, "starlance-app")
 	if err := os.WriteFile(exe, []byte("binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestRemoveOldBinary(t *testing.T) {
 	removeOldBinary(exe, logger)
 
 	// The library's Windows leftover name: ".<exe>.old" next to the binary.
-	old := filepath.Join(dir, ".sc2-replay-uploader.old")
+	old := filepath.Join(dir, ".starlance-app.old")
 	if err := os.WriteFile(old, []byte("stale"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -127,11 +127,11 @@ func (a fakeAsset) GetBrowserDownloadURL() string { return "https://example.com/
 // platform: the platform zip, its .sha256 sidecar (required by
 // SHAValidator), and noise that must be ignored.
 func testAssets() []selfupdate.SourceAsset {
-	zipName := "sc2-replay-uploader-" + runtime.GOOS + "-" + runtime.GOARCH + ".zip"
+	zipName := "starlance-app-" + runtime.GOOS + "-" + runtime.GOARCH + ".zip"
 	return []selfupdate.SourceAsset{
 		fakeAsset{name: zipName + ".sha256", id: 3},
 		fakeAsset{name: zipName, id: 2},
-		fakeAsset{name: "sc2-replay-uploader-linux-amd64.zip", id: 4},
+		fakeAsset{name: "starlance-app-linux-amd64.zip", id: 4},
 		fakeAsset{name: "checksums.txt", id: 5},
 	}
 }
@@ -238,7 +238,7 @@ func TestApplyUpdateNeedsChecksumSidecar(t *testing.T) {
 	// Release without the .sha256 sidecar: SHAValidator must fail detection.
 	src := &fakeSource{releases: []selfupdate.SourceRelease{
 		fakeRelease{tag: "v1.2.0", assets: []selfupdate.SourceAsset{
-			fakeAsset{name: "sc2-replay-uploader-" + runtime.GOOS + "-" + runtime.GOARCH + ".zip", id: 2},
+			fakeAsset{name: "starlance-app-" + runtime.GOOS + "-" + runtime.GOARCH + ".zip", id: 2},
 		}},
 	}}
 	up := newTestUpdater(t, src)
@@ -267,15 +267,15 @@ func TestPinnedAssetPatternSelectsOnlyTheZip(t *testing.T) {
 	// The releases carry a raw Windows exe for the website download; the
 	// updater must never pick it (or a checksum sidecar, or another OS).
 	re := regexp.MustCompile(pinnedAssetPattern("windows", "amd64"))
-	want := "sc2-replay-uploader-windows-amd64.zip"
+	want := "starlance-app-windows-amd64.zip"
 	if !re.MatchString(want) {
 		t.Fatalf("pattern %q does not match %q", re, want)
 	}
 	for _, name := range []string{
-		"sc2-replay-uploader-windows-amd64.exe",
-		"sc2-replay-uploader-windows-amd64.zip.sha256",
-		"sc2-replay-uploader-darwin-arm64.zip",
-		"starlance-uploader-macos-app-arm64.zip",
+		"starlance-app-windows-amd64.exe",
+		"starlance-app-windows-amd64.zip.sha256",
+		"starlance-app-darwin-arm64.zip",
+		"starlance-app-macos-arm64.zip",
 	} {
 		if re.MatchString(name) {
 			t.Errorf("pattern %q must not match %q", re, name)

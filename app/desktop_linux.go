@@ -27,13 +27,13 @@ const (
 	desktopIconName      = linuxAppID
 	desktopIconSize      = 256
 	desktopIconOldName   = "starlance-uploader.png"
-	desktopEntryOldNames = "StarLance.desktop,starlance-uploader.desktop"
+	desktopEntryOldNames = "StarLance.desktop,starlance-uploader.desktop,starlance-replay-uploader.desktop"
 )
 
 // installDesktopIntegration writes the desktop entry and icon that give the
 // window its taskbar identity, then removes stale entries left by older
 // builds. Every failure is logged and skipped: a missing icon is cosmetic and
-// must never block the uploader.
+// must never block the app.
 func installDesktopIntegration(logger *log.Logger) {
 	exe, err := currentExecutable()
 	if err != nil {
@@ -129,7 +129,9 @@ func removeStaleDesktopEntry(path string, logger *log.Logger) {
 		return
 	}
 	text := string(b)
-	if !strings.Contains(text, "Icon="+desktopIconName) && !strings.Contains(text, "Icon=starlance-uploader") {
+	if !strings.Contains(text, "Icon="+desktopIconName) &&
+		!strings.Contains(text, "Icon=starlance-uploader") &&
+		!strings.Contains(text, "Icon=starlance-replay-uploader") {
 		return
 	}
 	removeStaleFile(path, "entry", logger)

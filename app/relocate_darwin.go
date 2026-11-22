@@ -40,7 +40,7 @@ func installStableCopy(exe string) (string, bool, error) {
 		}
 		return targetExe, true, nil
 	}
-	target := filepath.Join(home, "Library", "Application Support", "StarLance", "sc2-replay-uploader")
+	target := filepath.Join(home, "Library", "Application Support", "StarLance", "starlance-app")
 	if withinDir(exe, filepath.Dir(target)) {
 		return target, false, nil
 	}

@@ -25,7 +25,7 @@ func TestAppDirXDGResolution(t *testing.T) {
 		if err != nil {
 			t.Fatalf("appDir: %v", err)
 		}
-		if want := filepath.Join(base, "starlance-uploader"); dir != want {
+		if want := filepath.Join(base, "starlance-app"); dir != want {
 			t.Errorf("appDir = %q, want %q", dir, want)
 		}
 		if info, err := os.Stat(dir); err != nil || !info.IsDir() {
@@ -41,7 +41,7 @@ func TestAppDirXDGResolution(t *testing.T) {
 		if err != nil {
 			t.Fatalf("appDir: %v", err)
 		}
-		if want := filepath.Join(home, ".config", "starlance-uploader"); dir != want {
+		if want := filepath.Join(home, ".config", "starlance-app"); dir != want {
 			t.Errorf("appDir = %q, want %q", dir, want)
 		}
 		if info, err := os.Stat(dir); err != nil || !info.IsDir() {

@@ -51,7 +51,7 @@ func (a *AuthState) EndLogin() { a.login.Store(false) }
 
 // TokenPath returns the 0600 token file location inside the per-user app dir:
 // %APPDATA%\StarLance\uploader\auth.json on Windows,
-// ~/.config/starlance-uploader/auth.json elsewhere (see appDir).
+// ~/.config/starlance-app/auth.json elsewhere (see appDir).
 func TokenPath() (string, error) {
 	dir, err := appDir()
 	if err != nil {

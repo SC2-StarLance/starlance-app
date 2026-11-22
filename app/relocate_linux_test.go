@@ -17,7 +17,7 @@ func TestInstallStableCopyLinux(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", data)
 
 	downloads := t.TempDir()
-	exe := filepath.Join(downloads, "sc2-replay-uploader")
+	exe := filepath.Join(downloads, "starlance-app")
 	if err := os.WriteFile(exe, []byte("v1"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func TestInstallStableCopyLinux(t *testing.T) {
 	if err != nil {
 		t.Fatalf("installStableCopy: %v", err)
 	}
-	want := filepath.Join(data, "starlance-uploader", "sc2-replay-uploader")
+	want := filepath.Join(data, "starlance-app", "starlance-app")
 	if !moved || target != want {
 		t.Fatalf("installStableCopy = (%q, %v), want (%q, true)", target, moved, want)
 	}

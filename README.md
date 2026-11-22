@@ -18,10 +18,10 @@ Get the latest build from the
 
 | Platform | File |
 | -------- | ---- |
-| Windows (64-bit) | `sc2-replay-uploader-windows-amd64.exe` |
-| Linux (64-bit) | `sc2-replay-uploader-linux-amd64.zip` |
-| macOS, Apple silicon | `starlance-uploader-macos-app-arm64.zip` |
-| macOS, Intel | `starlance-uploader-macos-app-amd64.zip` |
+| Windows (64-bit) | `starlance-app-windows-amd64.exe` |
+| Linux (64-bit) | `starlance-app-linux-amd64.zip` |
+| macOS, Apple silicon | `starlance-app-macos-arm64.zip` |
+| macOS, Intel | `starlance-app-macos-amd64.zip` |
 
 The Windows download is a single `.exe`: double-click it and the app starts.
 The macOS downloads are a `.app` bundle in a zip: unzip it, then right-click
@@ -29,7 +29,7 @@ the app and choose **Open** the first time. Release files carry a project
 signature so the app can verify an update before installing it, but the app
 itself is not code-signed or notarized by Apple, so Gatekeeper warns once;
 after that it opens normally. The Linux download is a zip with one binary
-inside: unzip it and run `sc2-replay-uploader`.
+inside: unzip it and run `starlance-app`.
 
 ## First launch
 
@@ -37,9 +37,9 @@ The app installs itself in a stable per-user folder and runs from there:
 
 | Platform | Installed copy |
 | -------- | -------------- |
-| Windows | `%LOCALAPPDATA%\Programs\StarLance\sc2-replay-uploader.exe`, plus a Start Menu shortcut |
+| Windows | `%LOCALAPPDATA%\Programs\StarLance\starlance-app.exe`, plus a Start Menu shortcut |
 | macOS | `~/Applications/StarLance App.app` (a copy already in `/Applications` stays there) |
-| Linux | `~/.local/share/starlance-uploader/sc2-replay-uploader`, plus an app-menu entry |
+| Linux | `~/.local/share/starlance-app/starlance-app`, plus an app-menu entry |
 
 The downloaded file can be deleted afterwards. An existing install is never
 overwritten; the app and its updater own that file. To uninstall, open
@@ -55,7 +55,7 @@ history live in a separate per-user state folder:
 | -------- | ------------ |
 | Windows | `%APPDATA%\StarLance\uploader\` |
 | macOS | `~/Library/Application Support/StarLance/uploader/` |
-| Linux | `~/.config/starlance-uploader/` |
+| Linux | `~/.config/starlance-app/` |
 
 ## Log in
 

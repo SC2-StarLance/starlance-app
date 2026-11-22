@@ -4,17 +4,17 @@ name: release
 # assets are what players download (browser, no terminal) and what the app
 # itself consumes for its fully automatic self-update:
 #
-#   sc2-replay-uploader-<os>-<arch>.zip          the binary (must contain exactly one file)
-#   sc2-replay-uploader-<os>-<arch>.zip.sha256   sha256sum checksum for manual checks
-#   sc2-replay-uploader-<os>-<arch>.zip.minisig  minisign signature, checked by the updater
-#   sc2-replay-uploader-windows-<arch>.exe       the same Windows binary, unpacked for the
-#                                                website's one-click download (the updater
-#                                                filters it out)
+#   starlance-app-<os>-<arch>.zip          the binary (must contain exactly one file)
+#   starlance-app-<os>-<arch>.zip.sha256   sha256sum checksum for manual checks
+#   starlance-app-<os>-<arch>.zip.minisig  minisign signature, checked by the updater
+#   starlance-app-windows-<arch>.exe       the same Windows binary, unpacked for the
+#                                          website's one-click download (the updater
+#                                          filters it out)
 #
 # Asset names and the single-binary zip shape are the contract detected by
 # github.com/creativeprojects/go-selfupdate (update.go): assets suffixed
 # -<os>-<arch>.zip, archive containing exactly the binary named
-# sc2-replay-uploader(.exe). The updater fetches <zip>.minisig and verifies it
+# starlance-app(.exe). The updater fetches <zip>.minisig and verifies it
 # against the public key embedded in minisign.pub; the secret key lives only in
 # the protected "release" environment. Change workflow, signing and update.go
 # together.
@@ -22,7 +22,7 @@ name: release
 # macOS additionally ships a double-clickable .app zip for the first install
 # (Finder + Dock icon). Its name deliberately avoids the "darwin" token the
 # library matches on, so the updater only ever sees the plain-binary zip and
-# replaces Contents/MacOS/sc2-replay-uploader inside the bundle.
+# replaces Contents/MacOS/starlance-app inside the bundle.
 
 on:
   push:
@@ -72,28 +72,28 @@ jobs:
           - runner: ubuntu-latest
             goos: linux
             goarch: amd64
-            binary: sc2-replay-uploader
+            binary: starlance-app
             tags: production,webkit2_41
             cgo: "1"
             ldflags: ""
           - runner: ubuntu-latest
             goos: windows
             goarch: amd64
-            binary: sc2-replay-uploader.exe
+            binary: starlance-app.exe
             tags: production
             cgo: "0"
             ldflags: "-H windowsgui"
           - runner: macos-15-intel # Intel
             goos: darwin
             goarch: amd64
-            binary: sc2-replay-uploader
+            binary: starlance-app
             tags: production
             cgo: "1"
             ldflags: ""
           - runner: macos-15 # Apple silicon
             goos: darwin
             goarch: arm64
-            binary: sc2-replay-uploader
+            binary: starlance-app
             tags: production
             cgo: "1"
             ldflags: ""
@@ -129,10 +129,10 @@ jobs:
       - name: Package binary
         run: |
           cd dist
-          zip -q "sc2-replay-uploader-${{ matrix.goos }}-${{ matrix.goarch }}.zip" "${{ matrix.binary }}"
+          zip -q "starlance-app-${{ matrix.goos }}-${{ matrix.goarch }}.zip" "${{ matrix.binary }}"
           if [ "${{ matrix.goos }}" = "windows" ]; then
             # One-click website download: the exe the zip carries, unpacked.
-            mv "${{ matrix.binary }}" "sc2-replay-uploader-windows-${{ matrix.goarch }}.exe"
+            mv "${{ matrix.binary }}" "starlance-app-windows-${{ matrix.goarch }}.exe"
           else
             rm "${{ matrix.binary }}"
           fi
@@ -154,14 +154,14 @@ jobs:
           CGO_ENABLED=1 GOOS=darwin GOARCH=${{ matrix.goarch }} \
             go build -tags production -trimpath \
             -ldflags "-s -w -X main.Version=${VERSION}" \
-            -o "$APP/Contents/MacOS/sc2-replay-uploader" ./app
+            -o "$APP/Contents/MacOS/starlance-app" ./app
           sh packaging/macos/make-icns.sh app/assets/sl-logo.png "$APP/Contents/Resources/AppIcon.icns"
           sed -e "s/__VERSION__/${VERSION}/g" packaging/macos/Info.plist > "$APP/Contents/Info.plist"
           cd dist
           # No "darwin" in this name on purpose: the updater must not match it.
-          zip -qry "starlance-uploader-macos-app-${{ matrix.goarch }}.zip" "StarLance App.app"
-          sha256sum "starlance-uploader-macos-app-${{ matrix.goarch }}.zip" \
-            | awk '{print $1}' > "starlance-uploader-macos-app-${{ matrix.goarch }}.zip.sha256"
+          zip -qry "starlance-app-macos-${{ matrix.goarch }}.zip" "StarLance App.app"
+          sha256sum "starlance-app-macos-${{ matrix.goarch }}.zip" \
+            | awk '{print $1}' > "starlance-app-macos-${{ matrix.goarch }}.zip.sha256"
           rm -rf "StarLance App.app"
           ls -l
 

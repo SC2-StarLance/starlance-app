@@ -16,7 +16,7 @@ import (
 
 // autostartFilename is the .desktop entry name; a stable name so toggling
 // never accumulates stale entries.
-const autostartFilename = "starlance-replay-uploader.desktop"
+const autostartFilename = "starlance-app.desktop"
 
 // autostartFilenameFor suffixes the entry for -profile instances, so two
 // accounts keep their own login registration instead of overwriting one
@@ -25,7 +25,7 @@ func autostartFilenameFor(profile string) string {
 	if profile == "" {
 		return autostartFilename
 	}
-	return "starlance-replay-uploader-" + profile + ".desktop"
+	return "starlance-app-" + profile + ".desktop"
 }
 
 func autostartPath() (string, error) {

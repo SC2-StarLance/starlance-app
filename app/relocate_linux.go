@@ -3,7 +3,7 @@
 package main
 
 // The Linux install location is the app's own data dir,
-// $XDG_DATA_HOME/starlance-uploader (default ~/.local/share/...). The desktop
+// $XDG_DATA_HOME/starlance-app (default ~/.local/share/...). The desktop
 // entry written by desktop_linux.go is the launcher, so this does not need to
 // be on PATH; one folder also means one folder to remove. A binary already
 // inside it (a self-update swap, or a player who put it there) is left alone.
@@ -19,7 +19,7 @@ func stableInstallPath() (string, error) {
 	if data == "" {
 		return "", errors.New("cannot resolve the XDG data dir")
 	}
-	return filepath.Join(data, "starlance-uploader", "sc2-replay-uploader"), nil
+	return filepath.Join(data, "starlance-app", "starlance-app"), nil
 }
 
 // installLocation reports the binary this copy installed itself as, or ""

@@ -22,7 +22,7 @@ func main() {
 	flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	fPath := flags.String("path", "", "override the SC2 replay directory to watch")
 	fConfig := flags.String("config", "", "path to the settings file (default: settings.json in the per-user app dir)")
-	fTakeover := flags.Int("takeover-from", 0, "internal: wait for the previous uploader instance to exit (self-update)")
+	fTakeover := flags.Int("takeover-from", 0, "internal: wait for the previous instance to exit (self-update)")
 	fProfile := flags.String("profile", "", "run as a named profile with its own login, settings and log (for testing two accounts side by side)")
 	fPrefix := flags.String("prefix", "", "only watch replay folders under this Wine/Steam prefix (keeps a two-account test from cross-uploading)")
 	fPortable := flags.Bool("portable", false, "run from wherever the binary is; do not install a copy in the per-user app folder")

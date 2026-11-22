@@ -6,9 +6,9 @@ import (
 )
 
 func TestLaunchAgentPlistEscapesAndCarriesProfile(t *testing.T) {
-	body := launchAgentPlist("/Users/a&b/StarLance <dev>/sc2-replay-uploader", "alt", "/Users/a&b/prefix")
+	body := launchAgentPlist("/Users/a&b/StarLance <dev>/starlance-app", "alt", "/Users/a&b/prefix")
 	for _, want := range []string{
-		"<string>/Users/a&amp;b/StarLance &lt;dev&gt;/sc2-replay-uploader</string>",
+		"<string>/Users/a&amp;b/StarLance &lt;dev&gt;/starlance-app</string>",
 		"<string>-profile</string><string>alt</string>",
 		"<string>club.starlance.app.alt</string>",
 		"<string>-prefix</string><string>/Users/a&amp;b/prefix</string>",

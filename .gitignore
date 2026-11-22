@@ -18,3 +18,5 @@ bin/
 /app/frontend/dist/leagues/
 /app/frontend/dist/races/
 /app/frontend/dist/bg.jpg
+/starlance-app
+/starlance-app.exe

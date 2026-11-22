@@ -18,15 +18,15 @@ package main
 // before taking over, so the two never run at once.
 //
 // Asset contract with .github/workflows/release.yml, as the library detects
-// it: assets named sc2-replay-uploader-<GOOS>-<GOARCH>.zip (suffix
+// it: assets named starlance-app-<GOOS>-<GOARCH>.zip (suffix
 // -<os>-<arch>.zip), the archive containing exactly the binary named
-// sc2-replay-uploader(.exe), plus a <asset>.zip.minisig signature made with
+// starlance-app(.exe), plus a <asset>.zip.minisig signature made with
 // this project's minisign key (tools/signrelease, public key in minisign.pub).
 // GitHub's release transport is public and unauthenticated, so the signature
 // is what stops a swapped asset from replacing the player's binary. A plain
 // .sha256 sidecar is still published for manual checks.
 //
-// Releases also carry a bare sc2-replay-uploader-windows-amd64.exe for the
+// Releases also carry a bare starlance-app-windows-amd64.exe for the
 // website's one-click download. The updater pins its filter to the zip: the
 // library's suffix matching treats a bare -<os>-<arch>.exe as eligible too,
 // so without the filter asset order would decide which one it downloads.

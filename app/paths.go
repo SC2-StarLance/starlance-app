@@ -53,8 +53,8 @@ func writeFileAtomic(path string, b []byte, perm os.FileMode) error {
 
 // appDir returns the per-user app dir that holds all persisted state:
 // %APPDATA%\StarLance\uploader on Windows, ~/Library/Application Support/
-// StarLance/uploader on macOS, $XDG_CONFIG_HOME/starlance-uploader or
-// ~/.config/starlance-uploader on Linux. The directory is created with 0700
+// StarLance/uploader on macOS, $XDG_CONFIG_HOME/starlance-app or
+// ~/.config/starlance-app on Linux. The directory is created with 0700
 // perms when missing; it is the same directory that holds auth.json.
 func appDir() (string, error) {
 	if appDirOverride != "" {
@@ -83,7 +83,7 @@ func appDir() (string, error) {
 			}
 			base = filepath.Join(home, ".config")
 		}
-		dir = filepath.Join(base, "starlance-uploader")
+		dir = filepath.Join(base, "starlance-app")
 	}
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return "", fmt.Errorf("paths: create app dir %s: %w", dir, err)
