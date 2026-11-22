@@ -33,6 +33,8 @@ if [ -z "$tool" ]; then
   tool="$work/appimagetool"
   curl -fsSL -o "$tool" \
     https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+  echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  $tool" \
+    | sha256sum -c - >/dev/null
   chmod 0755 "$tool"
 fi
 
