@@ -541,6 +541,23 @@ function fillReady(p, acc) {
   rt.className = "mm-rating";
   rt.textContent = oppRating == null ? "unranked" : String(oppRating);
   fl.appendChild(rt);
+
+  const h2h = p.head_to_head;
+  const h2hEl = $("mmH2H");
+  if (h2h && h2h.games > 0) {
+    const score = h2h.draws > 0
+      ? h2h.wins + " - " + h2h.losses + " - " + h2h.draws
+      : h2h.wins + " - " + h2h.losses;
+    const pct = h2h.win_rate == null ? "" : " (" + Math.round(h2h.win_rate * 100) + "% WR)";
+    h2hEl.textContent = "Record " + score + pct;
+    h2hEl.classList.remove("hidden");
+  } else if (h2h) {
+    h2hEl.textContent = "First meeting";
+    h2hEl.classList.remove("hidden");
+  } else {
+    h2hEl.textContent = "";
+    h2hEl.classList.add("hidden");
+  }
   const playedRegions = boot.playedRegions || [];
   const needsChannel = !!(code && !playedRegions.includes(code.toLowerCase()));
   $("mmChan").classList.toggle("hidden", !needsChannel);

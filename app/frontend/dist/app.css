@@ -1174,6 +1174,13 @@ h2 {
 .mm-flavor .mm-race { width: 16px; height: 16px; }
 .mm-flavor .mm-league { width: 18px; height: 18px; }
 .mm-flavor .mm-rating { font-variant-numeric: tabular-nums; }
+.mm-h2h {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--soft);
+  font-variant-numeric: tabular-nums;
+}
 .mm-flag { font-size: 15px; line-height: 1; margin-left: 6px; }
 .mm-verdict {
   margin: 8px 0 2px;
