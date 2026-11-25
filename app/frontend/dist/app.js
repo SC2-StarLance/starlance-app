@@ -176,6 +176,8 @@ function renderRegions() {
       let next = cur.includes(r) ? cur.filter((x) => x !== r) : [...cur, r];
       if (next.length === 0) next = [r];
       saveRegions(next);
+      // Growing from one region to several starts with no preferred star.
+      if (!cur.includes(r) && cur.length === 1) savePreferred(null);
       // A preference can only live on a selected region.
       if (preferred && !next.includes(preferred)) savePreferred(null);
       renderRegions();
@@ -232,7 +234,7 @@ function renderQueueModes() {
         if (!both) return;
         saveQueueMode(mode === "ranked" ? "unranked_only" : "ranked_only");
       } else {
-        saveQueueMode(mode === "ranked" ? "ranked_preferred" : "unranked_preferred");
+        saveQueueMode("any");
       }
       renderQueueModes();
       renderStatus();
