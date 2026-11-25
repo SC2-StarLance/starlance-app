@@ -951,8 +951,8 @@ function renderSettings() {
   $("setVersion").textContent = boot.version ? "Version " + boot.version : "";
   const installPath = boot.installPath || "";
   $("setInstall").textContent = installPath
-    ? "This copy runs from " + installPath
-    : "This copy runs from the folder you downloaded it to.";
+    ? "Installed in " + installPath + "."
+    : "Not installed.";
   $("setInstall").classList.toggle("hidden", false);
   $("uninstallBtn").disabled = !installPath;
   $("startSystem").checked = !!boot.startWithSystem;
