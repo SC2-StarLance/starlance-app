@@ -1515,16 +1515,25 @@ $("startSystem").onchange = async () => {
   }
 };
 
+let replaysBusy = false;
+let replaysPending = null;
 $("replaysPublic").onchange = async () => {
-  const on = $("replaysPublic").checked;
+  replaysPending = $("replaysPublic").checked;
+  if (replaysBusy) return;
+  replaysBusy = true;
   try {
-    await svc.SetReplaysPublic(on);
+    while (replaysPending !== null) {
+      const on = replaysPending;
+      replaysPending = null;
+      await svc.SetReplaysPublic(on);
+    }
     boot = await svc.Bootstrap();
-    renderSettings();
   } catch (e) {
-    $("replaysPublic").checked = !on;
     showSet(String(e && e.message ? e.message : e), true);
+  } finally {
+    replaysBusy = false;
   }
+  $("replaysPublic").checked = boot.replays_public !== false;
 };
 
 $("checkUpdate").onclick = () => {
