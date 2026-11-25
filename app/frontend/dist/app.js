@@ -41,10 +41,10 @@ let preferred = (() => {
 let poll = null;
 let bootRetry = null;
 
-const QUEUE_MODES = ["ranked_only", "unranked_only", "ranked_preferred", "unranked_preferred"];
+const QUEUE_MODES = ["any", "ranked_only", "unranked_only", "ranked_preferred", "unranked_preferred"];
 let queueMode = (() => {
   const raw = localStorage.getItem("sl.queuePreference");
-  return QUEUE_MODES.includes(raw) ? raw : "ranked_preferred";
+  return QUEUE_MODES.includes(raw) ? raw : "any";
 })();
 
 const REGION_LABEL = { us: "NA", eu: "EU", kr: "KR" };
@@ -108,7 +108,7 @@ function selectedPreference() {
 }
 
 function saveQueueMode(next) {
-  queueMode = QUEUE_MODES.includes(next) ? next : "ranked_preferred";
+  queueMode = QUEUE_MODES.includes(next) ? next : "any";
   localStorage.setItem("sl.queuePreference", queueMode);
 }
 
@@ -215,7 +215,7 @@ function renderQueueModes() {
   const box = $("queueModes");
   if (!box) return;
   box.innerHTML = "";
-  const both = queueMode === "ranked_preferred" || queueMode === "unranked_preferred";
+  const both = queueMode === "any" || queueMode === "ranked_preferred" || queueMode === "unranked_preferred";
   const rankedOn = queueMode !== "unranked_only";
   const unrankedOn = queueMode !== "ranked_only";
   const locked = state.kind !== "idle";
@@ -238,7 +238,7 @@ function renderQueueModes() {
       renderStatus();
     };
     if (both) {
-      const starred = mode === "ranked" ? queueMode === "ranked_preferred" : queueMode === "unranked_preferred";
+      const starred = queueMode === (mode === "ranked" ? "ranked_preferred" : "unranked_preferred");
       const star = document.createElement("button");
       star.type = "button";
       star.className = "region-star" + (starred ? " on" : "");
@@ -251,7 +251,7 @@ function renderQueueModes() {
       star.onclick = () => {
         if (locked) return;
         saveQueueMode(starred
-          ? (mode === "ranked" ? "unranked_preferred" : "ranked_preferred")
+          ? "any"
           : (mode === "ranked" ? "ranked_preferred" : "unranked_preferred"));
         renderQueueModes();
         renderStatus();
@@ -267,6 +267,7 @@ function renderQueueModes() {
 }
 
 function queueModeLabel(mode) {
+  if (mode === "any") return "Ranked or Unranked";
   return mode === "unranked_only" || mode === "unranked_preferred" ? "Unranked" : "Ranked";
 }
 

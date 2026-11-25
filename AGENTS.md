@@ -32,14 +32,15 @@ Go system-tray app that watches every SC2 multiplayer replays folder on the mach
   one region is selected (the intersection is already fixed), and a stale
   preference outside the selected set is dropped by the client and ignored by
   the backend.
-- **Ranked and Unranked are two toggles with one preference star.** The Play tab
-  shows mode chips under the region chips (spec 2.39.0 `queue_preference`). Both
-  are on by default with Ranked starred; while both are on the star is a radio
-  choice between them, turning one chip off is strict, and turning the last one
-  off is refused. The four states (`ranked_only`, `unranked_only`,
-  `ranked_preferred`, `unranked_preferred`) live in `sl.queuePreference` and
-  default to `ranked_preferred`; `StartQueue` sends `queue_preference`, and the
-  status bar and match overlay name Ranked, Unranked, or Unfair from
+- **Ranked and Unranked are two toggles with an optional preference star.** The
+  Play tab shows mode chips under the region chips (spec 2.40.0
+  `queue_preference`). Both are on by default with no star; while both are on the
+  star is an optional radio choice between them (clicking a lit star removes it),
+  turning one chip off is strict, and turning the last one off is refused. The
+  states (`any`, `ranked_only`, `unranked_only`, `ranked_preferred`,
+  `unranked_preferred`) live in `sl.queuePreference` and default to `any` (both
+  lit, no favorite); `StartQueue` sends `queue_preference`, and the status bar and
+  match overlay name Ranked, Unranked, Ranked or Unranked, or Unfair from
   `queue_preference` and the pending match's `rated`/`mismatch`.
 - **Replay visibility is one Settings switch.** `replays_public` (default true)
   loads from `Bootstrap` and saves through `SetReplaysPublic` ->

@@ -70,25 +70,38 @@ func TestStartQueueDropsAStalePreference(t *testing.T) {
 }
 
 func TestStartQueueSendsQueuePreference(t *testing.T) {
-	var queued map[string]any
-	mux := http.NewServeMux()
-	mux.HandleFunc("/me", func(w http.ResponseWriter, _ *http.Request) {
-		w.Write([]byte(`{"battlenet_accounts":[{"id":"acct-1"}]}`))
-	})
-	mux.HandleFunc("/queue", func(w http.ResponseWriter, r *http.Request) {
-		if err := json.NewDecoder(r.Body).Decode(&queued); err != nil {
-			t.Errorf("decode queue body: %v", err)
-		}
-		w.WriteHeader(http.StatusOK)
-	})
-	srv := httptest.NewServer(mux)
-	defer srv.Close()
-
-	s := testWindowService(t, srv)
-	if err := s.StartQueue("protoss", []string{"eu"}, "", "unranked_only"); err != nil {
-		t.Fatalf("StartQueue: %v", err)
+	cases := []struct {
+		name string
+		sent string
+		want string
+	}{
+		{name: "any is accepted", sent: "any", want: "any"},
+		{name: "explicit mode is passed through", sent: "unranked_only", want: "unranked_only"},
+		{name: "empty defaults to any", sent: "", want: "any"},
 	}
-	if got, _ := queued["queue_preference"].(string); got != "unranked_only" {
-		t.Fatalf("queue_preference = %v, want unranked_only", queued["queue_preference"])
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var queued map[string]any
+			mux := http.NewServeMux()
+			mux.HandleFunc("/me", func(w http.ResponseWriter, _ *http.Request) {
+				w.Write([]byte(`{"battlenet_accounts":[{"id":"acct-1"}]}`))
+			})
+			mux.HandleFunc("/queue", func(w http.ResponseWriter, r *http.Request) {
+				if err := json.NewDecoder(r.Body).Decode(&queued); err != nil {
+					t.Errorf("decode queue body: %v", err)
+				}
+				w.WriteHeader(http.StatusOK)
+			})
+			srv := httptest.NewServer(mux)
+			defer srv.Close()
+
+			s := testWindowService(t, srv)
+			if err := s.StartQueue("protoss", []string{"eu"}, "", tc.sent); err != nil {
+				t.Fatalf("StartQueue: %v", err)
+			}
+			if got, _ := queued["queue_preference"].(string); got != tc.want {
+				t.Fatalf("queue_preference = %v, want %s", queued["queue_preference"], tc.want)
+			}
+		})
 	}
 }

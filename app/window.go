@@ -548,9 +548,9 @@ func (s *WindowService) StartQueue(race string, regions []string, preferred stri
 	}
 	queuePreference = strings.ToLower(strings.TrimSpace(queuePreference))
 	switch queuePreference {
-	case "ranked_only", "unranked_only", "ranked_preferred", "unranked_preferred":
+	case "any", "ranked_only", "unranked_only", "ranked_preferred", "unranked_preferred":
 	default:
-		queuePreference = "ranked_preferred"
+		queuePreference = "any"
 	}
 	id, err := s.ensureAccountID()
 	if err != nil {

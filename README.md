@@ -4,7 +4,7 @@ StarLance is a community balance mod for StarCraft II with a ranked ladder
 outside the game client. This is the desktop companion app: it watches your
 StarCraft II replay folders, uploads each new game to the ladder, and shows
 your queue and match state in a small window. Queue as Ranked, Unranked, or
-both with a preferred mode.
+both, with an optional preferred mode.
 
 ![The StarLance App window showing the queue tab](docs/screenshot.png)
 
@@ -84,8 +84,8 @@ starlance.club.
 
 ## The window
 
-- **Play**: your ladder state, Ranked/Unranked queue modes with a preferred
-  mode star, the queue button, and the login panel when signed out.
+- **Play**: your ladder state, Ranked/Unranked queue modes with an optional
+  preferred mode star, the queue button, and the login panel when signed out.
 - **Map bans**: pick the maps you do not want to play.
 - **Settings**: the `/join StarLance` in-game channel, replay visibility,
   watched replay folders (add a folder, open the folder), **Start with
