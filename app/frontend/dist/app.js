@@ -19,8 +19,8 @@ if (window.runtime && window.runtime.EventsOn) {
 }
 const $ = (id) => document.getElementById(id);
 
-let boot = { loggedIn: false, setupDone: false, name: "", regions: [], folders: [], startWithSystem: false, version: "", ranks: {}, stats: {} };
-let state = { kind: "idle", elapsed: 0, at: 0, counters: {}, pending: null, voidSeenAt: null, lockUntil: 0, lockLabel: "Leave penalty" };
+let boot = { loggedIn: false, setupDone: false, name: "", regions: [], folders: [], startWithSystem: false, replays_public: true, version: "", ranks: {}, stats: {} };
+let state = { kind: "idle", elapsed: 0, at: 0, counters: {}, pending: null, queuePreference: "", voidSeenAt: null, lockUntil: 0, lockLabel: "Leave penalty" };
 let race = localStorage.getItem("sl.race") || "zerg";
 let wanted = JSON.parse(localStorage.getItem("sl.regions") || "null");
 // One preferred region, not a set: a star is a radio choice (spec 2.31.0), used
@@ -40,6 +40,12 @@ let preferred = (() => {
 })();
 let poll = null;
 let bootRetry = null;
+
+const QUEUE_MODES = ["ranked_only", "unranked_only", "ranked_preferred", "unranked_preferred"];
+let queueMode = (() => {
+  const raw = localStorage.getItem("sl.queuePreference");
+  return QUEUE_MODES.includes(raw) ? raw : "ranked_preferred";
+})();
 
 const REGION_LABEL = { us: "NA", eu: "EU", kr: "KR" };
 const REGIONS_ALL = ["us", "eu", "kr"];
@@ -99,6 +105,15 @@ function savePreferred(next) {
 
 function selectedPreference() {
   return selectedRegions().includes(preferred) ? preferred : "";
+}
+
+function saveQueueMode(next) {
+  queueMode = QUEUE_MODES.includes(next) ? next : "ranked_preferred";
+  localStorage.setItem("sl.queuePreference", queueMode);
+}
+
+function selectedQueuePreference() {
+  return queueMode;
 }
 
 function regionHint(text) {
@@ -192,6 +207,74 @@ function renderRegions() {
     box.appendChild(b);
   }
   renderStatus();
+}
+
+const MODE_LABEL = { ranked: "Ranked", unranked: "Unranked" };
+
+function renderQueueModes() {
+  const box = $("queueModes");
+  if (!box) return;
+  box.innerHTML = "";
+  const both = queueMode === "ranked_preferred" || queueMode === "unranked_preferred";
+  const rankedOn = queueMode === "ranked_only" || queueMode === "ranked_preferred";
+  const unrankedOn = queueMode === "unranked_only" || queueMode === "unranked_preferred";
+  const locked = state.kind !== "idle";
+  for (const mode of ["ranked", "unranked"]) {
+    const on = mode === "ranked" ? rankedOn : unrankedOn;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "region" + (on ? " on" : "");
+    b.textContent = MODE_LABEL[mode];
+    b.disabled = locked;
+    b.onclick = () => {
+      if (locked) return;
+      if (on) {
+        if (!both) return;
+        saveQueueMode(mode === "ranked" ? "unranked_only" : "ranked_only");
+      } else {
+        saveQueueMode(mode === "ranked" ? "ranked_preferred" : "unranked_preferred");
+      }
+      renderQueueModes();
+      renderStatus();
+    };
+    if (both) {
+      const starred = mode === "ranked" ? queueMode === "ranked_preferred" : queueMode === "unranked_preferred";
+      const star = document.createElement("button");
+      star.type = "button";
+      star.className = "region-star" + (starred ? " on" : "");
+      star.textContent = starred ? "★" : "☆";
+      star.setAttribute("aria-pressed", starred ? "true" : "false");
+      star.setAttribute("aria-label", mode === "ranked"
+        ? "Prefer Ranked when both players accept both modes"
+        : "Prefer Unranked when both players accept both modes");
+      star.disabled = locked;
+      star.onclick = () => {
+        if (locked) return;
+        saveQueueMode(starred
+          ? (mode === "ranked" ? "unranked_preferred" : "ranked_preferred")
+          : (mode === "ranked" ? "ranked_preferred" : "unranked_preferred"));
+        renderQueueModes();
+        renderStatus();
+      };
+      const slot = document.createElement("span");
+      slot.className = "region-slot";
+      slot.append(b, star);
+      box.appendChild(slot);
+      continue;
+    }
+    box.appendChild(b);
+  }
+}
+
+function queueModeLabel(mode) {
+  return mode === "unranked_only" || mode === "unranked_preferred" ? "Unranked" : "Ranked";
+}
+
+function pendingModeLabel(p) {
+  if (!p) return "";
+  if (p.mismatch) return "Unfair";
+  if (p.rated === false) return "Unranked";
+  return "Ranked";
 }
 
 // Tell the tray toggle whether this window is mapped. Wails has no visibility
@@ -325,6 +408,7 @@ let mmMatchId = null;
 let mmDismissed = "";
 let mmAccepting = "";
 let mmMismatch = false;
+let mmMode = "";
 let mmDeadline = 0;
 let mmStage = "";
 let mmFilledFor = "";
@@ -399,6 +483,7 @@ function renderMatchModal(p) {
     mmDismissed = "";
     mmAccepting = "";
     mmMismatch = false;
+    mmMode = "";
     if (mmRaf !== null) cancelAnimationFrame(mmRaf);
     mmRaf = null;
     return;
@@ -437,6 +522,7 @@ function renderMatchModal(p) {
   }
   mmStage = stage;
   mmMismatch = !!p.mismatch;
+  mmMode = pendingModeLabel(p);
   modal.classList.remove("hidden");
   $("mmAccept").dataset.match = pid;
   $("mmDecline").dataset.match = pid;
@@ -455,9 +541,10 @@ function renderMatchModal(p) {
 // more after a click that had already been counted.
 function paintStage(stage) {
   mmStage = stage;
-  $("mmEyebrow").textContent = stage === "ready"
-    ? "Match ready"
-    : (stage === "accept" && mmMismatch ? "Unfair Match Warning" : "Match found");
+  const modeEyebrow = mmMode === "Unfair"
+    ? "Unfair Match Warning"
+    : (mmMode ? mmMode + " Match" : "Match found");
+  $("mmEyebrow").textContent = stage === "ready" && !mmMode ? "Match ready" : modeEyebrow;
   $("mmTitle").classList.toggle("hidden", stage === "accept");
   $("mmTitle").textContent = stage === "accept"
     ? "Accept match"
@@ -744,10 +831,13 @@ function renderStatus() {
   }
   let muted = !ranked;
   if (searching) {
-    text = n > 1 ? n + " in queue" : "Waiting for an opponent";
+    const mode = queueModeLabel(state.queuePreference || queueMode);
+    const wait = n > 1 ? n + " in queue" : "Waiting for an opponent";
+    text = mode + " · " + wait;
     muted = false;
   } else if (matched) {
-    text = "Match in progress...";
+    const mode = pendingModeLabel(state.pending);
+    text = mode ? mode + " match in progress" : "Match in progress...";
     muted = false;
   }
   $("qtext").textContent = text;
@@ -777,6 +867,7 @@ function renderStatus() {
   lastKind = state.kind;
 
   renderRace();
+  renderQueueModes();
 }
 
 // A compact season trend for the selected race, drawn into the idle bar where
@@ -856,6 +947,8 @@ function renderSettings() {
     : "The Uninstall button below removes your startup entry and every saved login and setting. The app file stays where you launched it.";
   $("setInstall").classList.toggle("hidden", false);
   $("startSystem").checked = !!boot.startWithSystem;
+  $("replaysPublic").checked = boot.replays_public !== false;
+  $("replaysPublic").disabled = !boot.loggedIn;
 
   const list = $("folders");
   list.innerHTML = "";
@@ -956,6 +1049,7 @@ async function refresh() {
     if (state.kind === "searching") state.at = Date.now();
     state.counters = s.counters || {};
     state.pending = s.pending_match || null;
+    state.queuePreference = s.queue_preference || "";
     state.lockUntil = s.locked_until ? Date.parse(s.locked_until) : 0;
     state.lockLabel = (lv && lv.reason === "declined") ? "Decline penalty" : "Leave penalty";
     updateLock();
@@ -1336,7 +1430,7 @@ $("races").onclick = (e) => {
 $("findBtn").onclick = async () => {
   showError("");
   try {
-    await svc.StartQueue(race, selectedRegions(), selectedPreference());
+    await svc.StartQueue(race, selectedRegions(), selectedPreference(), selectedQueuePreference());
     state.kind = "searching";
     state.at = Date.now();
     state.elapsed = 0;
@@ -1416,6 +1510,18 @@ $("startSystem").onchange = async () => {
     showSet(on ? "Starts with your computer." : "Does not start with your computer.");
   } catch (e) {
     $("startSystem").checked = !on;
+    showSet(String(e && e.message ? e.message : e), true);
+  }
+};
+
+$("replaysPublic").onchange = async () => {
+  const on = $("replaysPublic").checked;
+  try {
+    await svc.SetReplaysPublic(on);
+    boot = await svc.Bootstrap();
+    renderSettings();
+  } catch (e) {
+    $("replaysPublic").checked = !on;
     showSet(String(e && e.message ? e.message : e), true);
   }
 };

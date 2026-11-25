@@ -3,7 +3,8 @@
 StarLance is a community balance mod for StarCraft II with a ranked ladder
 outside the game client. This is the desktop companion app: it watches your
 StarCraft II replay folders, uploads each new game to the ladder, and shows
-your queue and match state in a small window.
+your queue and match state in a small window. Queue as Ranked, Unranked, or
+both with a preferred mode.
 
 ![The StarLance App window showing the queue tab](docs/screenshot.png)
 
@@ -83,11 +84,11 @@ starlance.club.
 
 ## The window
 
-- **Play**: your ladder state, queue button, and the login panel when signed
-  out.
+- **Play**: your ladder state, Ranked/Unranked queue modes with a preferred
+  mode star, the queue button, and the login panel when signed out.
 - **Map bans**: pick the maps you do not want to play.
-- **Settings**: the `/join StarLance` in-game channel, watched replay
-  folders (add a folder, open the folder), **Start with
+- **Settings**: the `/join StarLance` in-game channel, replay visibility,
+  watched replay folders (add a folder, open the folder), **Start with
   system**, the version and update check, where the app is installed, and
   Quit.
 
@@ -109,11 +110,14 @@ page cannot push a different build.
 
 ## Privacy
 
-Short version: replays you upload are stored on the StarLance server and can
-be downloaded by anyone who has the link. The server also stores your player
-name, Battle.net tag, account ids, queue and match history, and logs IP
-addresses. There is no account deletion feature yet. The full description is
-in [PRIVACY.md](PRIVACY.md).
+Short version: replays you upload are stored on the StarLance server. Public
+replays can be downloaded by anyone who has the link. The server also stores
+your player name, Battle.net tag, account ids, queue and match history, and
+logs IP addresses. A replay is private when either player had public replays
+off at match time; private replays are downloadable only by the two players
+and StarLance admins. Match results and ratings stay public. The **Public
+replays** switch in Settings applies to future matches. There is no account
+deletion feature yet. The full description is in [PRIVACY.md](PRIVACY.md).
 
 ## Build from source
 

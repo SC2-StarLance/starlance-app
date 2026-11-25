@@ -89,6 +89,11 @@
             </p>
           </div>
 
+          <div id="modesWrap">
+            <p class="label">Mode</p>
+            <div class="regions" id="queueModes"></div>
+          </div>
+
           <div class="queuebar" id="queuebar" data-state="idle">
             <div class="qbar-status">
               <span class="rank-mark hidden" id="rankMark">
@@ -168,6 +173,11 @@
 
           <section class="card span2">
             <p class="eyebrow">Replays</p>
+            <label class="toggle">
+              <input type="checkbox" id="replaysPublic" />
+              <span class="switch" aria-hidden="true"></span>
+              <span class="toggle-label">Public replays</span>
+            </label>
             <p class="hint hidden" id="foldersHint">StarCraft II saves replays under Documents/StarCraft II/Accounts. Add the Replays folder for your account.</p>
             <ul class="folders" id="folders"></ul>
             <div class="row wrap">

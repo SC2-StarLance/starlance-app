@@ -28,10 +28,12 @@ The app has no analytics, no telemetry, and no crash reporting.
 
 ## Who can see it
 
-Replay files are publicly downloadable by anyone who has the link; the link
-is not access-controlled. Profiles, match history, and ratings are public on
-the StarLance website. Your login token and email, if you ever provide one,
-are not public.
+Public replays are downloadable by anyone who has the link. A player can turn
+public replays off in the app's settings; a replay is private when either
+player had public replays off at match time. Private replays are downloadable
+only by the two players and StarLance admins. Profiles, match history, match
+results, and ratings are public on the StarLance website. Your login token and
+email, if you ever provide one, are not public.
 
 ## Deleting data
 

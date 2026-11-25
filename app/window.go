@@ -61,6 +61,7 @@ type Bootstrap struct {
 	Ranks           map[string]string   `json:"ranks"`
 	Stats           map[string]RaceStat `json:"stats"`
 	Ratings         []RatingSeries      `json:"ratings"`
+	ReplaysPublic   bool                `json:"replays_public"`
 	// PlayedRegions are the regions the account already has a confirmed match
 	// on, so the window only reminds a player to join the in-game channel on a
 	// server they have never played. Best effort: a failed call leaves it empty.
@@ -238,6 +239,7 @@ func (s *WindowService) Bootstrap() (Bootstrap, error) {
 		Ranks:           map[string]string{},
 		Stats:           map[string]RaceStat{},
 		Ratings:         []RatingSeries{},
+		ReplaysPublic:   true,
 	}
 	if !out.LoggedIn {
 		return out, nil
@@ -246,6 +248,7 @@ func (s *WindowService) Bootstrap() (Bootstrap, error) {
 		ID              string   `json:"id"`
 		Name            string   `json:"name"`
 		VerifiedRegions []string `json:"verified_regions"`
+		ReplaysPublic   *bool    `json:"replays_public"`
 		Books           []struct {
 			Race   string  `json:"race"`
 			League *string `json:"league"`
@@ -270,6 +273,9 @@ func (s *WindowService) Bootstrap() (Bootstrap, error) {
 	}
 	out.Name = me.Name
 	out.Regions = orderRegions(me.VerifiedRegions)
+	if me.ReplaysPublic != nil {
+		out.ReplaysPublic = *me.ReplaysPublic
+	}
 	for _, b := range me.Books {
 		if b.League != nil && *b.League != "" {
 			out.Ranks[b.Race] = *b.League
@@ -461,6 +467,10 @@ func (s *WindowService) SetStartWithSystem(on bool) error {
 	return setStartWithSystem(s.deps, on, s.logger)
 }
 
+func (s *WindowService) SetReplaysPublic(public bool) error {
+	return s.call(http.MethodPut, "/me/replay-visibility", map[string]any{"public": public}, nil)
+}
+
 // OpenDashboard opens the player's dashboard in the default browser.
 func (s *WindowService) OpenDashboard() {
 	ctx := windowContext()
@@ -515,7 +525,7 @@ func (s *WindowService) folders() []string {
 	return nil
 }
 
-func (s *WindowService) StartQueue(race string, regions []string, preferred string) error {
+func (s *WindowService) StartQueue(race string, regions []string, preferred string, queuePreference string) error {
 	// No watched folder means no uploaded result, so a queue entry would be a
 	// promise the app cannot keep. Block it and send the player to Settings.
 	if len(s.folders()) == 0 {
@@ -536,6 +546,12 @@ func (s *WindowService) StartQueue(race string, regions []string, preferred stri
 	if !slices.Contains(regions, preferred) {
 		preferred = ""
 	}
+	queuePreference = strings.ToLower(strings.TrimSpace(queuePreference))
+	switch queuePreference {
+	case "ranked_only", "unranked_only", "ranked_preferred", "unranked_preferred":
+	default:
+		queuePreference = "ranked_preferred"
+	}
 	id, err := s.ensureAccountID()
 	if err != nil {
 		return err
@@ -545,6 +561,7 @@ func (s *WindowService) StartQueue(race string, regions []string, preferred stri
 		"bnet_account_id":  id,
 		"regions":          regions,
 		"preferred_region": preferred,
+		"queue_preference": queuePreference,
 	}
 	if err := s.call(http.MethodPost, "/queue", body, nil); err != nil {
 		return err

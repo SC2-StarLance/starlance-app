@@ -26,7 +26,7 @@ func TestStartQueueRefusesWithoutReplayFolder(t *testing.T) {
 	s.deps = TrayDeps{WatchedDirs: func() []string { return nil }}
 	s.cfg.ReplayPath = ""
 
-	err := s.StartQueue("terran", []string{"eu"}, "")
+	err := s.StartQueue("terran", []string{"eu"}, "", "")
 	if err == nil {
 		t.Fatal("StartQueue with no replay folder must fail")
 	}
