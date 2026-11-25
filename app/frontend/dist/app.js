@@ -216,8 +216,8 @@ function renderQueueModes() {
   if (!box) return;
   box.innerHTML = "";
   const both = queueMode === "ranked_preferred" || queueMode === "unranked_preferred";
-  const rankedOn = queueMode === "ranked_only" || queueMode === "ranked_preferred";
-  const unrankedOn = queueMode === "unranked_only" || queueMode === "unranked_preferred";
+  const rankedOn = queueMode !== "unranked_only";
+  const unrankedOn = queueMode !== "ranked_only";
   const locked = state.kind !== "idle";
   for (const mode of ["ranked", "unranked"]) {
     const on = mode === "ranked" ? rankedOn : unrankedOn;
