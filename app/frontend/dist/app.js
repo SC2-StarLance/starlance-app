@@ -78,13 +78,6 @@ function showError(msg) {
   e.classList.toggle("hidden", !msg);
 }
 
-function showSet(msg, isError) {
-  $("setNote").textContent = isError ? "" : msg || "";
-  $("setNote").classList.toggle("hidden", isError || !msg);
-  $("setError").textContent = isError ? msg || "" : "";
-  $("setError").classList.toggle("hidden", !isError || !msg);
-}
-
 function selectedRegions() {
   const all = boot.regions || [];
   if (!wanted) return all;
@@ -968,7 +961,7 @@ function renderSettings() {
       try {
         await svc.OpenFolder(dir);
       } catch (e) {
-        showSet(String(e && e.message ? e.message : e), true);
+        showError(String(e && e.message ? e.message : e));
       }
     };
     const name = document.createElement("span");
@@ -980,11 +973,10 @@ function renderSettings() {
     rm.onclick = async () => {
       try {
         boot.folders = await svc.RemoveFolder(dir);
-        showSet("Folder removed.");
         renderSettings();
         renderPanels();
       } catch (e) {
-        showSet(String(e && e.message ? e.message : e), true);
+        showError(String(e && e.message ? e.message : e));
       }
     };
     li.append(name, rm);
@@ -1170,7 +1162,7 @@ async function doLogin(btn) {
   const label = btn.textContent;
   btn.disabled = true;
   btn.textContent = "Waiting for browser…";
-  showSet("");
+  showError("");
   try {
     await svc.Login();
     const wait = setInterval(async () => {
@@ -1187,7 +1179,6 @@ async function doLogin(btn) {
     }, 2000);
   } catch (e) {
     const msg = String(e && e.message ? e.message : e);
-    showSet(msg, true);
     showError(msg);
     btn.disabled = false;
     btn.textContent = label;
@@ -1403,7 +1394,7 @@ for (const tab of document.querySelectorAll(".tab")) {
     for (const pane of ["ladder", "mapbans", "settings"]) {
       $("tab-" + pane).classList.toggle("hidden", pane !== name);
     }
-    showSet("");
+    showError("");
     if (name === "mapbans") loadMapBans();
   };
 }
@@ -1477,21 +1468,19 @@ $("authBtn").onclick = async () => {
   try {
     await svc.Logout();
     boot.loggedIn = false;
-    showSet("Logged out.");
     await bootUp();
   } catch (e) {
-    showSet(String(e && e.message ? e.message : e), true);
+    showError(String(e && e.message ? e.message : e));
   }
 };
 
 $("addFolder").onclick = async () => {
   try {
     boot.folders = await svc.AddFolder();
-    showSet("Folder added.");
     renderSettings();
     renderPanels();
   } catch (e) {
-    showSet(String(e && e.message ? e.message : e), true);
+    showError(String(e && e.message ? e.message : e));
   }
 };
 
@@ -1499,7 +1488,7 @@ $("openReplays").onclick = async () => {
   try {
     await svc.OpenReplays();
   } catch (e) {
-    showSet(String(e && e.message ? e.message : e), true);
+    showError(String(e && e.message ? e.message : e));
   }
 };
 
@@ -1508,10 +1497,9 @@ $("startSystem").onchange = async () => {
   try {
     await svc.SetStartWithSystem(on);
     boot.startWithSystem = on;
-    showSet(on ? "Starts with your computer." : "Does not start with your computer.");
   } catch (e) {
     $("startSystem").checked = !on;
-    showSet(String(e && e.message ? e.message : e), true);
+    showError(String(e && e.message ? e.message : e));
   }
 };
 
@@ -1529,7 +1517,7 @@ $("replaysPublic").onchange = async () => {
     }
     boot = await svc.Bootstrap();
   } catch (e) {
-    showSet(String(e && e.message ? e.message : e), true);
+    showError(String(e && e.message ? e.message : e));
   } finally {
     replaysBusy = false;
   }
@@ -1538,7 +1526,6 @@ $("replaysPublic").onchange = async () => {
 
 $("checkUpdate").onclick = () => {
   svc.CheckUpdate();
-  showSet("Checking for updates…");
 };
 
 $("quitBtn").onclick = () => svc.Quit();
@@ -1570,7 +1557,7 @@ $("uninstallConfirm").onclick = async () => {
     hideUninstallConfirm();
     btn.disabled = false;
     btn.textContent = "Uninstall";
-    showSet("StarLance App could not remove itself. Quit it, then delete the app file by hand.", true);
+    showError("StarLance App could not remove itself. Quit it, then delete the app file by hand.");
   }
 };
 
