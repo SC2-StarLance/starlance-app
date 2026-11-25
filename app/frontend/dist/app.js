@@ -945,10 +945,8 @@ function renderSettings() {
   $("setInstall").textContent = installPath
     ? "This copy runs from " + installPath
     : "This copy runs from the folder you downloaded it to.";
-  $("setUninstall").textContent = installPath
-    ? "The Uninstall button below removes this copy, its startup entry, and every saved login and setting."
-    : "The Uninstall button below removes your startup entry and every saved login and setting. The app file stays where you launched it.";
   $("setInstall").classList.toggle("hidden", false);
+  $("uninstallBtn").disabled = !installPath;
   $("startSystem").checked = !!boot.startWithSystem;
   $("replaysPublic").checked = boot.replays_public !== false;
   $("replaysPublic").disabled = !boot.loggedIn;
