@@ -72,10 +72,25 @@ function openURL(url) {
   window.open(url, "_blank");
 }
 
-function showError(msg) {
+let errorSticky = false;
+function showError(msg, sticky) {
   const e = $("error");
-  e.textContent = msg || "";
-  e.classList.toggle("hidden", !msg);
+  if (!msg) {
+    if (errorSticky) return;
+    e.textContent = "";
+    e.classList.add("hidden");
+    return;
+  }
+  errorSticky = !!sticky;
+  e.textContent = msg;
+  e.classList.remove("hidden");
+}
+
+function clearError() {
+  errorSticky = false;
+  const e = $("error");
+  e.textContent = "";
+  e.classList.add("hidden");
 }
 
 function selectedRegions() {
@@ -961,7 +976,7 @@ function renderSettings() {
       try {
         await svc.OpenFolder(dir);
       } catch (e) {
-        showError(String(e && e.message ? e.message : e));
+        showError(String(e && e.message ? e.message : e), true);
       }
     };
     const name = document.createElement("span");
@@ -973,10 +988,11 @@ function renderSettings() {
     rm.onclick = async () => {
       try {
         boot.folders = await svc.RemoveFolder(dir);
+        clearError();
         renderSettings();
         renderPanels();
       } catch (e) {
-        showError(String(e && e.message ? e.message : e));
+        showError(String(e && e.message ? e.message : e), true);
       }
     };
     li.append(name, rm);
@@ -1136,7 +1152,7 @@ async function bootUp() {
   }
   clearTimeout(bootRetry);
   boot = next;
-  showError("");
+  clearError();
   if (boot.siteURL) SITE = boot.siteURL;
   $("version").textContent = boot.version || "";
   renderWho();
@@ -1162,7 +1178,7 @@ async function doLogin(btn) {
   const label = btn.textContent;
   btn.disabled = true;
   btn.textContent = "Waiting for browser…";
-  showError("");
+  clearError();
   try {
     await svc.Login();
     const wait = setInterval(async () => {
@@ -1179,7 +1195,7 @@ async function doLogin(btn) {
     }, 2000);
   } catch (e) {
     const msg = String(e && e.message ? e.message : e);
-    showError(msg);
+    showError(msg, true);
     btn.disabled = false;
     btn.textContent = label;
   }
@@ -1394,7 +1410,7 @@ for (const tab of document.querySelectorAll(".tab")) {
     for (const pane of ["ladder", "mapbans", "settings"]) {
       $("tab-" + pane).classList.toggle("hidden", pane !== name);
     }
-    showError("");
+    clearError();
     if (name === "mapbans") loadMapBans();
   };
 }
@@ -1420,7 +1436,7 @@ $("races").onclick = (e) => {
 };
 
 $("findBtn").onclick = async () => {
-  showError("");
+  clearError();
   try {
     await svc.StartQueue(race, selectedRegions(), selectedPreference(), selectedQueuePreference());
     state.kind = "searching";
@@ -1430,7 +1446,7 @@ $("findBtn").onclick = async () => {
     await refresh();
     schedule();
   } catch (e) {
-    showError(String(e && e.message ? e.message : e));
+    showError(String(e && e.message ? e.message : e), true);
     await refresh();
     schedule();
   }
@@ -1439,7 +1455,7 @@ $("findBtn").onclick = async () => {
 $("hideBtn").onclick = () => svc.HideToTray();
 
 $("stopBtn").onclick = async () => {
-  showError("");
+  clearError();
   try {
     await svc.StopQueue();
     state.kind = "idle";
@@ -1448,7 +1464,7 @@ $("stopBtn").onclick = async () => {
     await refresh();
     schedule();
   } catch (e) {
-    showError(String(e && e.message ? e.message : e));
+    showError(String(e && e.message ? e.message : e), true);
     await refresh();
     schedule();
   }
@@ -1470,25 +1486,27 @@ $("authBtn").onclick = async () => {
     boot.loggedIn = false;
     await bootUp();
   } catch (e) {
-    showError(String(e && e.message ? e.message : e));
+    showError(String(e && e.message ? e.message : e), true);
   }
 };
 
 $("addFolder").onclick = async () => {
   try {
     boot.folders = await svc.AddFolder();
+    clearError();
     renderSettings();
     renderPanels();
   } catch (e) {
-    showError(String(e && e.message ? e.message : e));
+    showError(String(e && e.message ? e.message : e), true);
   }
 };
 
 $("openReplays").onclick = async () => {
   try {
     await svc.OpenReplays();
+    clearError();
   } catch (e) {
-    showError(String(e && e.message ? e.message : e));
+    showError(String(e && e.message ? e.message : e), true);
   }
 };
 
@@ -1497,9 +1515,10 @@ $("startSystem").onchange = async () => {
   try {
     await svc.SetStartWithSystem(on);
     boot.startWithSystem = on;
+    clearError();
   } catch (e) {
     $("startSystem").checked = !on;
-    showError(String(e && e.message ? e.message : e));
+    showError(String(e && e.message ? e.message : e), true);
   }
 };
 
@@ -1516,8 +1535,9 @@ $("replaysPublic").onchange = async () => {
       await svc.SetReplaysPublic(on);
     }
     boot = await svc.Bootstrap();
+    clearError();
   } catch (e) {
-    showError(String(e && e.message ? e.message : e));
+    showError(String(e && e.message ? e.message : e), true);
   } finally {
     replaysBusy = false;
   }
@@ -1557,7 +1577,7 @@ $("uninstallConfirm").onclick = async () => {
     hideUninstallConfirm();
     btn.disabled = false;
     btn.textContent = "Uninstall";
-    showError("StarLance App could not remove itself. Quit it, then delete the app file by hand.");
+    showError("StarLance App could not remove itself. Quit it, then delete the app file by hand.", true);
   }
 };
 
